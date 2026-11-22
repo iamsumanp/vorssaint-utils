@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>io.github.iamsumanp.vorssaint-sync</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/zsh</string>
+        <string>/Users/docsumo123/Desktop/desk/vorssaint-utils/Tools/fork-sync.sh</string>
+    </array>
+    <!-- Evenings only. The later slots are backups for a Mac that slept
+         through 19:30; a run with nothing new exits in seconds. -->
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>19</integer><key>Minute</key><integer>30</integer></dict>
+        <dict><key>Hour</key><integer>21</integer><key>Minute</key><integer>0</integer></dict>
+        <dict><key>Hour</key><integer>23</integer><key>Minute</key><integer>0</integer></dict>
+    </array>
+    <key>LowPriorityIO</key>
+    <true/>
+    <key>Nice</key>
+    <integer>10</integer>
+</dict>
+</plist>

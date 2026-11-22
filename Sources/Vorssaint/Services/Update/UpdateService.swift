@@ -27,7 +27,10 @@ final class UpdateService: ObservableObject {
     /// preview. Set alongside `.available`; cleared otherwise.
     @Published private(set) var availableNotes: String?
 
-    private let repository = "vorssaint/vorssaint-utils"
+    /// This fork's own releases. It publishes none: Tools/fork-sync.sh rebuilds
+    /// the app on every upstream release with the fork's changes, so the
+    /// official build never replaces it.
+    private let repository = "iamsumanp/vorssaint-utils"
     private var downloadURL: URL?
     /// Size the release advertises for the asset, used to bound the download.
     private var downloadExpectedBytes: Int64?
@@ -147,8 +150,10 @@ final class UpdateService: ObservableObject {
                 }
 
                 guard !releases.isEmpty else {
+                    // No release on the fork means nothing to install: the
+                    // nightly sync keeps this build current.
                     self.availableNotes = nil
-                    self.state = .failed(error?.localizedDescription ?? "-")
+                    self.state = .upToDate
                     return
                 }
 
