@@ -41,6 +41,12 @@ struct NotchStrings {
     let disabled: String
     let files: String
     let hideInFullscreen: String
+    /// Per-display choices. Only English is translated.
+    var eachDisplay = "Each display"
+    var showOnThisDisplay = "Show"
+    var overFullscreen = "Over full screen"
+    var eachDisplayHint = "Show applies while the island follows the pointer or shows on all displays. Over full screen keeps it on that display while a full-screen app is open."
+    var builtInTag = "Built-in"
     let hoverInFullscreen: String
     let showInCaptures: String
     let clipboardWindow: String

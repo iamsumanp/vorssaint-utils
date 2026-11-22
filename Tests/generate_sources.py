@@ -1653,6 +1653,8 @@ def main():
           + declaration(notch, "    var acceptsUserInteraction: Bool {")
           + declaration(notch, "    var acceptsSystemFeedback: Bool {")
           + declaration(notch, "    private func updateFullscreenVisibility(").replace("private func", "func", 1)
+              .replace("NotchDisplayChoices.hidesInFullscreen(on: displayID)",
+                       "UserDefaults.standard.bool(forKey: DefaultsKey.notchHideInFullscreen)")
           + declaration(notch, "    private func fullscreenEnvironmentDidChange()").replace("private func", "func", 1)
           + "}\nfinal class PreciseVolumeRollerService: VolumeState {\n"
           + "static let shared = PreciseVolumeRollerService()\n"
@@ -1871,6 +1873,7 @@ def main():
           + declaration(notch, "    private var canFollowPointer:").replace("private var", "var", 1)
           + declaration(notch, "    private func schedulePointerFollow()").replace("private func", "func", 1)
           + declaration(notch, "    private func followPointer()").replace("private func", "func", 1)
+              .replace(",\n              !NotchDisplayChoices.isExcluded(screen.notchDisplayID)", "")
           + declaration(notch, "    private func move(to screen:").replace("private func", "func", 1)
           + declaration(notch, "    private func cancelRelocation()").replace("private func", "func", 1)
           + "}\n}\n")
@@ -1885,6 +1888,9 @@ def main():
           .replace("NotchSupport.showsInCaptures()", "showsInCaptures")
           .replace("UserDefaults.standard.bool(forKey: DefaultsKey.notchOutlineEnabled)", "outlineEnabled")
           .replace("UserDefaults.standard.bool(forKey: DefaultsKey.notchHideInFullscreen)", "hidesInFullscreen")
+          # The fork's per-display choices: none made in these tests.
+          .replace(".filter { NotchDisplayChoices.hidesInFullscreen(on: $0) }", "")
+          .replace(",\n               !NotchDisplayChoices.isExcluded(id)", "")
           .replace("FeatureStrings.notch(L10n.shared.language).open", "openTitle")
           + "}\n}\n")
     write("NotchSectionScrollRoute.swift", "import AppKit\nextension NotchSectionPagingTests {\nfinal class Service: State {\n"

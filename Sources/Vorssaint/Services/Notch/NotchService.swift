@@ -2903,7 +2903,8 @@ final class NotchService: ObservableObject {
         // Mission Control spans the displays; the island moves once it is back.
         guard running, !suspended, followsPointer, canFollowPointer,
               windowHost?.isConcealedForMissionControl == false,
-              let screen = NSScreen.withMouse, screen.notchDisplayID != displayID else { return }
+              let screen = NSScreen.withMouse, screen.notchDisplayID != displayID,
+              !NotchDisplayChoices.isExcluded(screen.notchDisplayID) else { return }
         move(to: screen)
     }
 
@@ -3244,7 +3245,8 @@ final class NotchService: ObservableObject {
         for screen in screens {
             let id = screen.notchDisplayID
             var base: NotchGeometry?
-            if id != displayID || id == mirrorHeldForArrival, !hidesAtRest, !fullscreenDisplays.contains(id) {
+            if id != displayID || id == mirrorHeldForArrival, !hidesAtRest, !fullscreenDisplays.contains(id),
+               !NotchDisplayChoices.isExcluded(id) {
                 var geometry = baseGeometry(for: screen)
                 geometry.compactSideRoom = mirrorSideRoom(on: screen, geometry: geometry)
                 // A simulated island needs the menus' room at rest, as the island does.
@@ -3349,14 +3351,15 @@ final class NotchService: ObservableObject {
     private func updateFullscreenDisplays() {
         guard showsOnAllDisplays, UserDefaults.standard.bool(forKey: DefaultsKey.notchHideInFullscreen)
         else { fullscreenDisplays = []; fullscreenSpaceDisplays = []; return }
-        let covered = NotchAppFullscreen.coveredDisplays()
+        let covered = NotchAppFullscreen.coveredDisplays().filter { NotchDisplayChoices.hidesInFullscreen(on: $0) }
         guard let topology = SpaceWindowBridge.topology() else {
             fullscreenDisplays = covered
             fullscreenSpaceDisplays = []
             return
         }
         let separate = NSScreen.screensHaveSeparateSpaces
-        let displays = NSScreen.screens.map(\.notchDisplayID)
+        // A display kept over full screen in Settings never counts as covered.
+        let displays = NSScreen.screens.map(\.notchDisplayID).filter { NotchDisplayChoices.hidesInFullscreen(on: $0) }
         fullscreenSpaceDisplays = Set(displays.filter { topology.isFullscreen(on: $0, separateSpaces: separate) })
         fullscreenDisplays = Set(displays.filter { fullscreenSpaceDisplays.contains($0) || covered.contains($0) })
     }
@@ -3603,6 +3606,19 @@ final class NotchService: ObservableObject {
 
     private func screenIndex(in screens: [NSScreen]) -> Int? {
         let preference = displayPreference
+        // Following the pointer or showing everywhere, displays turned off in
+        // Settings are left out, unless that would leave none.
+        if preference == .pointer || preference == .all {
+            let allowed = screens.filter { !NotchDisplayChoices.isExcluded($0.notchDisplayID) }
+            if !allowed.isEmpty, allowed.count < screens.count {
+                guard let index = choosableScreenIndex(in: allowed, preference: preference) else { return nil }
+                return screens.firstIndex { $0 === allowed[index] }
+            }
+        }
+        return choosableScreenIndex(in: screens, preference: preference)
+    }
+
+    private func choosableScreenIndex(in screens: [NSScreen], preference: NotchDisplay) -> Int? {
         var pointer: Int?
         if preference == .pointer || preference == .all {
             // The island stays on its display until it can follow the pointer.
@@ -3711,7 +3727,7 @@ final class NotchService: ObservableObject {
     private func updateFullscreenVisibility(displayID: CGDirectDisplayID) {
         // A game's own full screen leaves the desktop Space in place, so the
         // frontmost app's windows are read when the Space is not full screen.
-        let enabled = UserDefaults.standard.bool(forKey: DefaultsKey.notchHideInFullscreen)
+        let enabled = NotchDisplayChoices.hidesInFullscreen(on: displayID)
         let bySpace = enabled
             && SpaceWindowBridge.topology()?.isFullscreen(on: displayID, separateSpaces: NSScreen.screensHaveSeparateSpaces) == true
         let hidden = bySpace || (enabled && NotchAppFullscreen.coveredDisplays().contains(displayID))

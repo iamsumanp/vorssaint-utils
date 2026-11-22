@@ -968,6 +968,12 @@ enum DefaultsKey {
     static let notchShortcutEnabled = "notchShortcutEnabled"
     static let notchShortcut = "notchShortcut"
     static let notchHideInFullscreen = "notchHideInFullscreen"
+    /// Displays (UUIDs, comma separated) the island never shows on while it
+    /// follows the pointer or shows on all displays.
+    static let notchExcludedDisplays = "notchExcludedDisplays"
+    /// Displays (UUIDs, comma separated) that keep the island over full-screen
+    /// apps while "Hide content in full screen" is on.
+    static let notchFullscreenKeptDisplays = "notchFullscreenKeptDisplays"
     static let notchHoverInFullscreen = "notchHoverInFullscreen"
     static let notchHideUntilHover = "notchHideUntilHover"
     static let notchHiddenShowsActivity = "notchHiddenShowsActivity"
@@ -1588,6 +1594,8 @@ enum Defaults {
         DefaultsKey.notchShortcutEnabled: false,
         DefaultsKey.notchShortcut: GlobalShortcut.notchDefault.storageValue,
         DefaultsKey.notchHideInFullscreen: false,
+        DefaultsKey.notchExcludedDisplays: "",
+        DefaultsKey.notchFullscreenKeptDisplays: "",
         DefaultsKey.notchHoverInFullscreen: false,
         DefaultsKey.notchHideUntilHover: false,
         DefaultsKey.notchHiddenShowsActivity: false,

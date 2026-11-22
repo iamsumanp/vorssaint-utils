@@ -740,6 +740,10 @@ struct NotchSettings: View {
                     choice(text.allDisplays, symbol: "rectangle.on.rectangle",
                            selected: display == NotchDisplay.all.rawValue) { display = NotchDisplay.all.rawValue }
                 }
+                NotchEachDisplaySettings(text: text,
+                                         choosesDisplays: display == NotchDisplay.pointer.rawValue
+                                            || display == NotchDisplay.all.rawValue,
+                                         hidesInFullscreen: hideInFullscreen)
             }
             SettingsCard(title: editor.destinations) {
                 destination(text.panel, symbol: "bubble.middle.top", value: $appPanel)
@@ -1120,5 +1124,65 @@ private struct NotchSilhouetteSample: View {
         .scaleEffect(0.5)
         .frame(width: 200, height: 24)
         .accessibilityHidden(true)
+    }
+}
+
+/// One row per connected display: whether the island shows there, and
+/// whether it stays over full-screen apps there.
+private struct NotchEachDisplaySettings: View {
+    let text: NotchStrings
+    /// Only following the pointer or showing everywhere picks among displays.
+    let choosesDisplays: Bool
+    let hidesInFullscreen: Bool
+    @AppStorage(DefaultsKey.notchExcludedDisplays) private var excluded = ""
+    @AppStorage(DefaultsKey.notchFullscreenKeptDisplays) private var kept = ""
+    @State private var screens: [(id: CGDirectDisplayID, name: String, builtIn: Bool)] = []
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(text.eachDisplay).font(.subheadline.weight(.medium))
+            ForEach(screens, id: \.id) { screen in
+                HStack(spacing: 10) {
+                    Image(systemName: screen.builtIn ? "laptopcomputer" : "display")
+                        .frame(width: 18)
+                        .foregroundStyle(.secondary)
+                    Text(screen.name).lineLimit(1)
+                    if screen.builtIn {
+                        Text(text.builtInTag).font(.caption).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 8)
+                    Toggle(text.showOnThisDisplay, isOn: binding(DefaultsKey.notchExcludedDisplays, screen.id, inverted: true))
+                        .toggleStyle(.checkbox)
+                        .disabled(!choosesDisplays)
+                    Toggle(text.overFullscreen, isOn: binding(DefaultsKey.notchFullscreenKeptDisplays, screen.id))
+                        .toggleStyle(.checkbox)
+                        .disabled(!hidesInFullscreen)
+                }
+            }
+            Text(text.eachDisplayHint).font(.caption).foregroundStyle(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.leading, settingsRowTextInset)
+        .onAppear(perform: readScreens)
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didChangeScreenParametersNotification)) { _ in
+            readScreens()
+        }
+    }
+
+    private func readScreens() {
+        screens = NSScreen.screens.map { screen in
+            let id = (screen.deviceDescription[NSDeviceDescriptionKey("NSScreenNumber")] as? NSNumber)?.uint32Value ?? 0
+            return (id, screen.localizedName, CGDisplayIsBuiltin(id) != 0)
+        }
+    }
+
+    /// Reads the stored list through its @AppStorage value so the row redraws.
+    private func binding(_ key: String, _ id: CGDirectDisplayID, inverted: Bool = false) -> Binding<Bool> {
+        Binding {
+            _ = key == DefaultsKey.notchExcludedDisplays ? excluded : kept
+            return NotchDisplayChoices.contains(key, id) != inverted
+        } set: { on in
+            NotchDisplayChoices.set(key, id, on != inverted)
+        }
     }
 }

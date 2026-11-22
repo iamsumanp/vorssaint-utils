@@ -111,6 +111,43 @@ enum NotchDisplay: String, CaseIterable {
     case automatic, builtIn, main, pointer, all
 }
 
+/// Choices made for each connected display, as Peaky offers: whether the
+/// island shows there at all, and whether it stays over full-screen apps.
+/// Displays are remembered by UUID, which survives unplugging them.
+enum NotchDisplayChoices {
+    static func uuid(_ id: CGDirectDisplayID) -> String? {
+        guard let uuid = CGDisplayCreateUUIDFromDisplayID(id)?.takeRetainedValue() else { return nil }
+        return CFUUIDCreateString(nil, uuid) as String
+    }
+
+    static func uuids(_ key: String, in defaults: UserDefaults = .standard) -> Set<String> {
+        Set((defaults.string(forKey: key) ?? "").split(separator: ",").map(String.init))
+    }
+
+    static func contains(_ key: String, _ id: CGDirectDisplayID, in defaults: UserDefaults = .standard) -> Bool {
+        guard let uuid = uuid(id) else { return false }
+        return uuids(key, in: defaults).contains(uuid)
+    }
+
+    static func set(_ key: String, _ id: CGDirectDisplayID, _ included: Bool, in defaults: UserDefaults = .standard) {
+        guard let uuid = uuid(id) else { return }
+        var all = uuids(key, in: defaults)
+        if included { all.insert(uuid) } else { all.remove(uuid) }
+        defaults.set(all.sorted().joined(separator: ","), forKey: key)
+    }
+
+    /// Turned off for this display in Settings.
+    static func isExcluded(_ id: CGDirectDisplayID, in defaults: UserDefaults = .standard) -> Bool {
+        contains(DefaultsKey.notchExcludedDisplays, id, in: defaults)
+    }
+
+    /// Whether the island steps aside for a full-screen app on this display.
+    static func hidesInFullscreen(on id: CGDirectDisplayID, in defaults: UserDefaults = .standard) -> Bool {
+        defaults.bool(forKey: DefaultsKey.notchHideInFullscreen)
+            && !contains(DefaultsKey.notchFullscreenKeptDisplays, id, in: defaults)
+    }
+}
+
 /// How the island meets the top of a display without a camera housing: a
 /// capsule floating in the menu bar, as on the phone, or a cutout hanging
 /// from the top edge. A physical camera always keeps the cutout it covers.
