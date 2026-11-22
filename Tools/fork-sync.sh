@@ -109,7 +109,11 @@ restore() {
 }
 
 echo "running tests…"
-./build.sh --test >/dev/null 2>&1 || restore "tests failed on $LATEST + fork changes"
+TEST_LOG="$STATE_DIR/last-test.log"
+if ! ./build.sh --test >"$TEST_LOG" 2>&1; then
+    grep -v sandbox_extension "$TEST_LOG" | grep -E "FAILED|  - " | head -30
+    restore "tests failed on $LATEST + fork changes"
+fi
 
 echo "building and installing…"
 WAS_RUNNING=0

@@ -46,6 +46,10 @@ enum NotchMascotTests {
                         let parts = NotchMascotGeometry.robot(size: size)
                         figure = [parts.ears, parts.antenna, parts.bulb]
                             .reduce(parts.head.boundingBoxOfPath) { $0.union($1.boundingBoxOfPath) }
+                    } else if style == .cat {
+                        let parts = NotchMascotGeometry.cat(size: size)
+                        figure = parts.head.boundingBoxOfPath.union(parts.leftEar.boundingBoxOfPath)
+                            .union(parts.rightEar.boundingBoxOfPath)
                     } else {
                         figure = NotchMascotGeometry.body(shape, size: size).boundingBoxOfPath
                     }

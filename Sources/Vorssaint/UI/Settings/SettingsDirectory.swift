@@ -263,7 +263,7 @@ enum SettingsDirectory {
         let batteryRest = state.hardware.battery && state.batteryRest
         let tintedBattery = batteryRest && state.on(DefaultsKey.notchLowBatteryTint)
         let islandTerms: [SettingsSearchTerms] = [
-            .init([notchEditor.layout, notch.size, notch.translucentBackground, notch.showOutline], notch: .layout),
+            .init([notchEditor.layout, notch.size, notch.translucentBackground, notch.translucentDarkness, notch.showOutline], notch: .layout),
             .init([notch.width, notch.maximumHeight], notch: .layout, when: state.customSize),
             .init([notch.cameraFit, notch.hideMenuBarGap, notch.width, notch.height],
                   notch: .layout, when: state.hardware.notchedDisplay),
@@ -287,7 +287,7 @@ enum SettingsDirectory {
             .init([notchAgents.title, "Claude", "Codex", "OpenCode", "GitHub Copilot", "Cursor", "AI", "tokens", notchAgents.resetsCard,
                    notchAgents.limitsAs, notchAgents.limitFocus, notchAgents.liveActivity, notchAgents.finishAlert,
                    notchAgents.limitAlert, notchAgents.budget, notchAgents.priceUpdates], feature: .notchAgents, notch: .module(.agents)),
-            .init([notchAgents.readout], feature: .notchAgents, notch: .module(.agents), when: state.on(DefaultsKey.notchAgentsLiveActivity)),
+            .init([notchAgents.readout, notchAgents.indicator], feature: .notchAgents, notch: .module(.agents), when: state.on(DefaultsKey.notchAgentsLiveActivity)),
             .init([notchAgents.finishAfter], feature: .notchAgents, notch: .module(.agents), when: state.on(DefaultsKey.notchAgentsFinishAlert)),
             .init([notchAgents.limitAt], feature: .notchAgents, notch: .module(.agents), when: state.on(DefaultsKey.notchAgentsLimitAlert)),
             .init([FeatureStrings.claudeAccount(language).title], feature: .notchAgents,
