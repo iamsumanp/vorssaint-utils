@@ -322,19 +322,23 @@ private struct NotchAgentStripSample: View {
     var body: some View {
         NotchAgentReadoutTimeline(readout: readout) { date in
             let working = usage.snapshot.live.first?.provider ?? provider
-            let marksTrail = indicator == NotchAgentIndicator.pulse.rawValue
-            let mark = NotchAgentGlyph(provider: working, size: 11)
-                .frame(maxWidth: .infinity, alignment: marksTrail ? .trailing : .leading)
-            let text = Text(reading(at: date))
-                .font(.system(size: 12, weight: .medium))
-                .monospacedDigit()
-                .foregroundStyle(working.tint)
-                .lineLimit(1)
-                .frame(maxWidth: .infinity, alignment: marksTrail ? .leading : .trailing)
+            let pulses = indicator == NotchAgentIndicator.pulse.rawValue
             HStack(spacing: 0) {
-                if marksTrail { text } else { mark }
+                NotchAgentGlyph(provider: working, size: 11, working: !pulses)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 Color.clear.frame(width: Self.camera)
-                if marksTrail { mark } else { text }
+                Group {
+                    if pulses {
+                        NotchAgentGlyph(provider: working, size: 11)
+                    } else {
+                        Text(reading(at: date))
+                            .font(.system(size: 12, weight: .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(working.tint)
+                            .lineLimit(1)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .trailing)
             }
             .padding(.horizontal, 10)
             .frame(width: Self.camera + 116, height: 24)

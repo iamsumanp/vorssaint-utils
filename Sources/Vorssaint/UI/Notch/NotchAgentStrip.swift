@@ -41,18 +41,30 @@ struct NotchAgentStrip: View {
             ? geometry.compactActivityEdgeInset(boxHeight: iconSize + 4, radius: (iconSize + 4) / 2) : 0
         let textInset = !geometry.compactActivityUsesFooter
             ? geometry.compactActivityEdgeInset(boxHeight: textSize * 0.72, radius: 0) : 0
-        // With the pulse dot chosen, the reading sits left of the camera and
-        // the dots right of it; the agent logo keeps the original order.
-        let marksTrail = indicator == NotchAgentIndicator.pulse.rawValue
+        // With the pulse dot chosen, the logo rests still left of the camera
+        // and each working agent's dot pulses right of it, in place of the
+        // reading. The agent logo option keeps logo and reading.
+        let pulses = indicator == NotchAgentIndicator.pulse.rawValue
         let marks = Button { service.openActivity(.agents) } label: {
+            HStack(spacing: 1) {
+                if geometry.compactActivityWingWidth >= 28 {
+                    ForEach(working) { NotchAgentGlyph(provider: $0, size: iconSize, working: !pulses) }
+                }
+            }
+            .padding(.leading, iconInset)
+            .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
+                   alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        let dots = Button { service.openActivity(.agents) } label: {
             HStack(spacing: 1) {
                 if geometry.compactActivityWingWidth >= 28 {
                     ForEach(working) { NotchAgentGlyph(provider: $0, size: iconSize) }
                 }
             }
-            .padding(marksTrail ? .trailing : .leading, iconInset)
+            .padding(.trailing, iconInset)
             .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
-                   alignment: marksTrail ? .trailing : .leading)
+                   alignment: .trailing)
             .contentShape(Rectangle())
         }
         let readingWing = Button { service.openActivity(.agents) } label: {
@@ -75,15 +87,15 @@ struct NotchAgentStrip: View {
                     }
                 }
             }
-            .padding(marksTrail ? .leading : .trailing, textInset)
+            .padding(.trailing, textInset)
             .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
-                   alignment: marksTrail ? .leading : .trailing)
+                   alignment: .trailing)
             .contentShape(Rectangle())
         }
         HStack(spacing: 0) {
-            if marksTrail { readingWing } else { marks }
+            marks
             Color.clear.frame(width: geometry.compactActivityCameraGap)
-            if marksTrail { marks } else { readingWing }
+            if pulses { dots } else { readingWing }
         }
         .frame(height: geometry.compactActivityContentHeight)
         .padding(.horizontal, geometry.compactActivityHorizontalPadding)

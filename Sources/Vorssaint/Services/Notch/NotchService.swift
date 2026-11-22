@@ -831,7 +831,10 @@ final class NotchService: ObservableObject {
         let frame = mark * 1.45 + 1
         let marks = CGFloat(max(1, working)) * frame + CGFloat(max(0, working - 1))
             + provisional.compactActivityEdgeInset(boxHeight: mark + 4, radius: (mark + 4) / 2)
-        return max(reading, marks) + NotchAgentSupport.stripCameraGap
+        // The pulse dot takes the reading's side, so only marks need room.
+        let pulses = UserDefaults.standard.string(forKey: DefaultsKey.notchAgentsIndicator)
+            == NotchAgentIndicator.pulse.rawValue
+        return (pulses ? marks : max(reading, marks)) + NotchAgentSupport.stripCameraGap
     }
 
     var musicShowsVolume: Bool { NotchSupport.showsMusicVolume() }
