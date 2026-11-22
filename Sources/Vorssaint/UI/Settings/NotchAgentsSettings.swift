@@ -316,21 +316,25 @@ private struct NotchAgentStripSample: View {
     let focus: NotchAgentLimitFocus
     let provider: AgentProvider
     @ObservedObject private var usage = AgentUsageService.shared
+    @AppStorage(DefaultsKey.notchAgentsIndicator) private var indicator = NotchAgentIndicator.mark.rawValue
     private static let camera: CGFloat = 64
 
     var body: some View {
         NotchAgentReadoutTimeline(readout: readout) { date in
             let working = usage.snapshot.live.first?.provider ?? provider
+            let marksTrail = indicator == NotchAgentIndicator.pulse.rawValue
+            let mark = NotchAgentGlyph(provider: working, size: 11)
+                .frame(maxWidth: .infinity, alignment: marksTrail ? .trailing : .leading)
+            let text = Text(reading(at: date))
+                .font(.system(size: 12, weight: .medium))
+                .monospacedDigit()
+                .foregroundStyle(working.tint)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: marksTrail ? .leading : .trailing)
             HStack(spacing: 0) {
-                NotchAgentGlyph(provider: working, size: 11)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                if marksTrail { text } else { mark }
                 Color.clear.frame(width: Self.camera)
-                Text(reading(at: date))
-                    .font(.system(size: 12, weight: .medium))
-                    .monospacedDigit()
-                    .foregroundStyle(working.tint)
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                if marksTrail { mark } else { text }
             }
             .padding(.horizontal, 10)
             .frame(width: Self.camera + 116, height: 24)

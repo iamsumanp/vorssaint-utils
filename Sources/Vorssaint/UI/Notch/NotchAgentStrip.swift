@@ -16,6 +16,7 @@ struct NotchAgentStrip: View {
     @AppStorage(DefaultsKey.notchAgentsReadout) private var readout = NotchAgentReadout.elapsed.rawValue
     @AppStorage(DefaultsKey.notchAgentsLimitDisplay) private var display = NotchAgentLimitDisplay.remaining.rawValue
     @AppStorage(DefaultsKey.notchAgentsLimitFocus) private var focus = NotchAgentLimitFocus.mostUsed.rawValue
+    @AppStorage(DefaultsKey.notchAgentsIndicator) private var indicator = NotchAgentIndicator.mark.rawValue
 
     private func working(_ live: [AgentLiveSession]) -> [AgentProvider] {
         AgentProvider.allCases.filter { provider in live.contains { $0.provider == provider } }
@@ -40,44 +41,49 @@ struct NotchAgentStrip: View {
             ? geometry.compactActivityEdgeInset(boxHeight: iconSize + 4, radius: (iconSize + 4) / 2) : 0
         let textInset = !geometry.compactActivityUsesFooter
             ? geometry.compactActivityEdgeInset(boxHeight: textSize * 0.72, radius: 0) : 0
+        // With the pulse dot chosen, the reading sits left of the camera and
+        // the dots right of it; the agent logo keeps the original order.
+        let marksTrail = indicator == NotchAgentIndicator.pulse.rawValue
+        let marks = Button { service.openActivity(.agents) } label: {
+            HStack(spacing: 1) {
+                if geometry.compactActivityWingWidth >= 28 {
+                    ForEach(working) { NotchAgentGlyph(provider: $0, size: iconSize) }
+                }
+            }
+            .padding(marksTrail ? .trailing : .leading, iconInset)
+            .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
+                   alignment: marksTrail ? .trailing : .leading)
+            .contentShape(Rectangle())
+        }
+        let readingWing = Button { service.openActivity(.agents) } label: {
+            Group {
+                if geometry.compactActivityWingWidth >= 42 {
+                    NotchAgentReadoutTimeline(readout: NotchAgentReadout(rawValue: readout) ?? .elapsed) { date in
+                        let text = reading(at: date, live: live)
+                        Text(text)
+                            .font(.system(size: textSize, weight: .medium))
+                            .monospacedDigit()
+                            .foregroundStyle(tint)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.6)
+                            // A reading that gains a digit, like an hour
+                            // passing, needs wider wings; the service
+                            // measures the same reading.
+                            .onChange(of: NotchAgentSupport.readingShape(text)) { _, _ in
+                                DispatchQueue.main.async { service.refreshPresentation() }
+                            }
+                    }
+                }
+            }
+            .padding(marksTrail ? .leading : .trailing, textInset)
+            .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
+                   alignment: marksTrail ? .leading : .trailing)
+            .contentShape(Rectangle())
+        }
         HStack(spacing: 0) {
-            Button { service.openActivity(.agents) } label: {
-                HStack(spacing: 1) {
-                    if geometry.compactActivityWingWidth >= 28 {
-                        ForEach(working) { NotchAgentGlyph(provider: $0, size: iconSize) }
-                    }
-                }
-                .padding(.leading, iconInset)
-                .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
-                       alignment: .leading)
-                .contentShape(Rectangle())
-            }
+            if marksTrail { readingWing } else { marks }
             Color.clear.frame(width: geometry.compactActivityCameraGap)
-            Button { service.openActivity(.agents) } label: {
-                Group {
-                    if geometry.compactActivityWingWidth >= 42 {
-                        NotchAgentReadoutTimeline(readout: NotchAgentReadout(rawValue: readout) ?? .elapsed) { date in
-                            let text = reading(at: date, live: live)
-                            Text(text)
-                                .font(.system(size: textSize, weight: .medium))
-                                .monospacedDigit()
-                                .foregroundStyle(tint)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.6)
-                                // A reading that gains a digit, like an hour
-                                // passing, needs wider wings; the service
-                                // measures the same reading.
-                                .onChange(of: NotchAgentSupport.readingShape(text)) { _, _ in
-                                    DispatchQueue.main.async { service.refreshPresentation() }
-                                }
-                        }
-                    }
-                }
-                .padding(.trailing, textInset)
-                .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
-                       alignment: .trailing)
-                .contentShape(Rectangle())
-            }
+            if marksTrail { marks } else { readingWing }
         }
         .frame(height: geometry.compactActivityContentHeight)
         .padding(.horizontal, geometry.compactActivityHorizontalPadding)
