@@ -529,9 +529,10 @@ struct NotchWindowBackground: View {
     @ObservedObject var presentation: NotchBackdropPresentation
     @AppStorage(DefaultsKey.notchLiquidGlassEnabled) private var glass = false
     @AppStorage(DefaultsKey.notchTranslucentBackground) private var translucent = false
+    @AppStorage(DefaultsKey.notchTranslucentDarkness) private var darkness = NotchTranslucentTint.defaultDarkness
 
     var body: some View {
-        NotchSurfaceBackground(presentation: presentation, glass: glass, translucent: translucent)
+        NotchSurfaceBackground(presentation: presentation, glass: glass, translucent: translucent, darkness: darkness)
     }
 }
 
@@ -540,6 +541,8 @@ struct NotchSurfaceBackground: View {
     @ObservedObject var presentation: NotchBackdropPresentation
     let glass: Bool
     var translucent = false
+    /// How black the see-through island stays, 0...1.
+    var darkness = NotchTranslucentTint.darkness
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
 
@@ -570,7 +573,8 @@ struct NotchSurfaceBackground: View {
                     .environment(\.appearsActive, true)
                     .materialActiveAppearance(.active)
                     .overlay {
-                        LinearGradient(stops: Self.shade(openness: presentation.openness, contrast: contrast),
+                        LinearGradient(stops: Self.shade(openness: presentation.openness, contrast: contrast,
+                                                         darkness: darkness),
                                        startPoint: .top, endPoint: .bottom)
                             .frame(height: presentation.contourBottom)
                             .frame(maxHeight: .infinity, alignment: .top)
@@ -590,11 +594,13 @@ struct NotchSurfaceBackground: View {
     /// The dimming over the glass, from the top of the island to its lip. Near
     /// a black strip the lip closes up, so the last frames of a collapse
     /// already match the resting island.
-    static func shade(openness: Double, contrast: ColorSchemeContrast) -> [Gradient.Stop] {
-        (0...64).map { index in
+    static func shade(openness: Double, contrast: ColorSchemeContrast,
+                      darkness: Double = NotchTranslucentTint.darkness) -> [Gradient.Stop] {
+        let clear = (contrast == .increased ? 0.10 : 0.45) * (1 - min(1, max(0, darkness)))
+        return (0...64).map { index in
             let t = Double(index) / 64
             return Gradient.Stop(
-                color: .black.opacity(1 - openness * (contrast == .increased ? 0.10 : 0.45) * pow(t, 2.5)),
+                color: .black.opacity(1 - openness * clear * pow(t, 2.5)),
                 location: t)
         }
     }
@@ -610,7 +616,7 @@ extension NotchSurfaceBackground {
             let height = presentation.contourBottom
             let stops = NotchTranslucentTint.stops(height: height, stripHeight: presentation.stripHeight,
                                                    openness: presentation.openness,
-                                                   increasedContrast: contrast == .increased)
+                                                   increasedContrast: contrast == .increased, darkness: darkness)
                 .map { Gradient.Stop(color: .black.opacity($0.opacity), location: $0.location) }
             // The blur covers only the island's box. Its mask image is drawn
             // again on every frame of a resize, and at the stage's size it

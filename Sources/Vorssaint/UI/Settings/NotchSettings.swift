@@ -92,6 +92,7 @@ struct NotchSettings: View {
     @AppStorage(DefaultsKey.notchCapsuleFitDrop) private var capsuleFitDrop = 0.0
     @AppStorage(DefaultsKey.notchHapticFeedback) private var hapticFeedback = true
     @AppStorage(DefaultsKey.notchTranslucentBackground) private var translucentBackground = false
+    @AppStorage(DefaultsKey.notchTranslucentDarkness) private var translucentDarkness = NotchTranslucentTint.defaultDarkness
     @AppStorage(DefaultsKey.notchLiquidGlassEnabled) private var liquidGlass = false
     @AppStorage(DefaultsKey.notchShelf) private var shelfWindow = true
     @AppStorage(DefaultsKey.notchDragReveal) private var dragReveal = true
@@ -250,6 +251,20 @@ struct NotchSettings: View {
                           caption: liquidGlassIsOn ? text.translucentBackgroundGlassHint : text.translucentBackgroundHint,
                           isOn: liquidGlassIsOn ? .constant(true) : $translucentBackground)
                     .disabled(liquidGlassIsOn)
+                if liquidGlassIsOn || translucentBackground {
+                    SettingsRow(symbol: "circle.lefthalf.filled", title: text.translucentDarkness) {
+                        HStack(spacing: 8) {
+                            Slider(value: $translucentDarkness, in: 0...1, step: 0.05) { Text(text.translucentDarkness) }
+                                .labelsHidden()
+                                .frame(width: 140)
+                            Text(translucentDarkness, format: .percent.precision(.fractionLength(0)))
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .frame(width: 40, alignment: .trailing)
+                        }
+                    }
+                    .padding(.leading, settingsRowTextInset)
+                }
             }
             // Only a display without a camera can float the island.
             if NotchSupport.hasDisplayWithoutNotch {

@@ -3217,23 +3217,34 @@ enum NotchMenuBarLayout {
 /// toward the translucent body.
 enum NotchTranslucentTint {
     static let rampLength: CGFloat = 36
+    /// How black the open, see-through island stays: 0 lets the blur show as
+    /// much as the original design, 1 keeps it fully black.
+    static let defaultDarkness = 0.6
+
+    /// The user's darkness, from Settings.
+    static var darkness: Double {
+        let defaults = UserDefaults.standard
+        guard defaults.object(forKey: DefaultsKey.notchTranslucentDarkness) != nil else { return defaultDarkness }
+        return min(1, max(0, defaults.double(forKey: DefaultsKey.notchTranslucentDarkness)))
+    }
 
     static func opacity(atDepth depth: CGFloat, stripHeight: CGFloat,
-                        openness: Double, increasedContrast: Bool) -> Double {
+                        openness: Double, increasedContrast: Bool, darkness: Double = 0) -> Double {
         guard depth > stripHeight else { return 1 }
         let ramp = Double(min(1, (depth - stripHeight) / rampLength))
         let eased = ramp * ramp * (3 - 2 * ramp)
-        return 1 - min(1, max(0, openness)) * (increasedContrast ? 0.3 : 0.62) * eased
+        let clear = (increasedContrast ? 0.3 : 0.62) * (1 - min(1, max(0, darkness)))
+        return 1 - min(1, max(0, openness)) * clear * eased
     }
 
     /// Gradient stops over an island `height` points tall, top to bottom.
     static func stops(height: CGFloat, stripHeight: CGFloat, openness: Double,
-                      increasedContrast: Bool) -> [(location: Double, opacity: Double)] {
+                      increasedContrast: Bool, darkness: Double = 0) -> [(location: Double, opacity: Double)] {
         guard height > 0 else { return [(0, 1), (1, 1)] }
         let depths = [0, stripHeight] + (1...8).map { stripHeight + rampLength * CGFloat($0) / 8 } + [height]
         return depths.filter { $0 >= 0 && $0 <= height }.map {
-            (Double($0 / height), opacity(atDepth: $0, stripHeight: stripHeight,
-                                          openness: openness, increasedContrast: increasedContrast))
+            (Double($0 / height), opacity(atDepth: $0, stripHeight: stripHeight, openness: openness,
+                                          increasedContrast: increasedContrast, darkness: darkness))
         }
     }
 }

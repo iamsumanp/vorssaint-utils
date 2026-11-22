@@ -51,6 +51,16 @@ final class NotchMascotRig: NSObject {
     private let fillMask = CAShapeLayer()
     private let visor = CAShapeLayer()
     private let shine = CAShapeLayer()
+    /// The cat's ears, each a layer of its own that turns where it meets the
+    /// head, with its fur and pink inside. They sit behind the head.
+    private let leftEar = CALayer()
+    private let rightEar = CALayer()
+    private let leftEarFur = CAShapeLayer()
+    private let rightEarFur = CAShapeLayer()
+    private let leftEarInner = CAShapeLayer()
+    private let rightEarInner = CAShapeLayer()
+    private let nose = CAShapeLayer()
+    private let whiskers = CAShapeLayer()
     private let face = CALayer()
     private let leftEye = CAShapeLayer()
     private let rightEye = CAShapeLayer()
@@ -72,18 +82,26 @@ final class NotchMascotRig: NSObject {
         root.addSublayer(hopper)
         hopper.addSublayer(squasher)
         squasher.addSublayer(tilter)
-        for layer in [ears, antenna, bulb, fill, visor, shine] { tilter.addSublayer(layer) }
+        leftEar.addSublayer(leftEarFur)
+        leftEar.addSublayer(leftEarInner)
+        rightEar.addSublayer(rightEarFur)
+        rightEar.addSublayer(rightEarInner)
+        for layer in [leftEar, rightEar, ears, antenna, bulb, fill, visor, shine, whiskers, nose] { tilter.addSublayer(layer) }
         tilter.addSublayer(attention)
         attention.addSublayer(face)
         face.addSublayer(leftEye)
         face.addSublayer(rightEye)
         fill.mask = fillMask
         for layer in [root, hopper, squasher, tilter, attention, face, ears, antenna, bulb, fill, fillMask, visor, shine,
-                      leftEye, rightEye] {
+                      leftEye, rightEye, leftEar, rightEar, leftEarFur, rightEarFur, leftEarInner, rightEarInner,
+                      nose, whiskers] {
             layer.actions = Self.noActions
         }
         shine.fillColor = NotchMascotColor.shine.cgColor
         visor.fillColor = NotchMascotColor.visor.cgColor
+        for layer in [leftEarInner, rightEarInner, nose] { layer.fillColor = NotchMascotColor.blush.cgColor }
+        whiskers.fillColor = nil
+        whiskers.lineCap = .round
     }
 
     private static let noActions: [String: CAAction] = [
@@ -115,7 +133,8 @@ final class NotchMascotRig: NSObject {
         }
         let box = CGRect(x: 0, y: 0, width: size, height: size)
         root.bounds = box
-        for layer in [hopper, squasher, tilter, attention, face, ears, antenna, bulb, fill, fillMask, visor, shine] {
+        for layer in [hopper, squasher, tilter, attention, face, ears, antenna, bulb, fill, fillMask, visor, shine,
+                      leftEarFur, rightEarFur, leftEarInner, rightEarInner, nose, whiskers] {
             layer.frame = box
             layer.contentsScale = scale
         }
@@ -145,6 +164,30 @@ final class NotchMascotRig: NSObject {
                 eye.shadowRadius = max(0.6, size * 0.04)
                 eye.shadowOffset = .zero
             }
+        } else if look.style == .cat {
+            let parts = NotchMascotGeometry.cat(size: size)
+            fillMask.path = parts.head
+            leftEarFur.path = parts.leftEar
+            rightEarFur.path = parts.rightEar
+            leftEarInner.path = parts.leftInner
+            rightEarInner.path = parts.rightInner
+            nose.path = parts.nose
+            whiskers.path = parts.whiskers
+            whiskers.strokeColor = palette.light.cgColor
+            whiskers.opacity = 0.8
+            whiskers.lineWidth = max(0.6, size * 0.028)
+            for fur in [leftEarFur, rightEarFur] { fur.fillColor = palette.light.cgColor }
+            // Each ear turns around the point where it meets the head.
+            for (ear, base) in [(leftEar, parts.leftEarBase), (rightEar, parts.rightEarBase)] {
+                ear.anchorPoint = CGPoint(x: base.x / size, y: base.y / size)
+                ear.frame = box
+                ear.contentsScale = scale
+            }
+            restEars(animated: false)
+            for eye in [leftEye, rightEye] {
+                eye.fillColor = NotchMascotColor.ink.cgColor
+                eye.shadowOpacity = 0
+            }
         } else {
             fillMask.path = NotchMascotGeometry.body(look.shape, size: size)
             for eye in [leftEye, rightEye] {
@@ -153,6 +196,7 @@ final class NotchMascotRig: NSObject {
             }
         }
         for layer in [ears, antenna, bulb, visor] { layer.isHidden = !robot }
+        for layer in [leftEar, rightEar, nose, whiskers] { layer.isHidden = look.style != .cat }
         shine.path = NotchMascotGeometry.shine(look.face, size: size)
         shine.isHidden = robot
         let face = look.face
@@ -174,6 +218,8 @@ final class NotchMascotRig: NSObject {
         if mood != .sleepy { blinks = 0 }
         apply(mood.expression, animated: animated && !reduceMotion)
         lightBulb(mood != .sleepy, animated: animated && !reduceMotion)
+        restEars(animated: animated && !reduceMotion)
+        if animated, !reduceMotion, previous == .sleepy { flickEar(left: Bool.random(), after: 0.15) }
         guard animated, !reduceMotion, size > 0 else { syncBlinking(); return }
         switch mood {
         case .surprised: pop()
@@ -268,12 +314,15 @@ final class NotchMascotRig: NSObject {
     /// Back to its own face at rest, with every motion taken off.
     func reset(to mood: NotchMascotMood) {
         stopBlinking()
-        for layer in [root, hopper, squasher, tilter, attention, face, leftEye, rightEye] { layer.removeAllAnimations() }
+        for layer in [root, hopper, squasher, tilter, attention, face, leftEye, rightEye, leftEar, rightEar] {
+            layer.removeAllAnimations()
+        }
         attention.transform = CATransform3DIdentity
         self.mood = mood
         blinks = 0
         dozed = false
         apply(mood.expression, animated: false)
+        restEars(animated: false)
     }
 
     // MARK: Attention
@@ -439,6 +488,123 @@ final class NotchMascotRig: NSObject {
         bulb.add(glow, forKey: "glow")
     }
 
+    // MARK: Cat ears
+
+    /// How far the ears lean out from upright at rest: flat back while it sleeps.
+    private var earRest: CGFloat { mood == .sleepy ? 0.5 : 0 }
+
+    /// Turns an ear outward by `amount` radians: the left ear's tip goes left,
+    /// the right one's right. The layers are drawn top down, so a positive
+    /// angle turns clockwise on screen.
+    private func earTransform(_ amount: CGFloat, left: Bool, lift: CGFloat = 1) -> CATransform3D {
+        CATransform3DScale(CATransform3DMakeRotation(left ? -amount : amount, 0, 0, 1), 1, lift, 1)
+    }
+
+    /// Settles the ears where they rest for the face it keeps.
+    private func restEars(animated: Bool) {
+        guard look.style == .cat else { return }
+        for (ear, left) in [(leftEar, true), (rightEar, false)] {
+            let target = earTransform(earRest, left: left)
+            if animated {
+                let settle = CASpringAnimation(keyPath: "transform")
+                settle.fromValue = ear.presentation()?.transform ?? ear.transform
+                settle.toValue = target
+                settle.damping = 11
+                settle.stiffness = 180
+                settle.duration = settle.settlingDuration
+                ear.add(settle, forKey: "rest")
+            }
+            CATransaction.begin()
+            CATransaction.setDisableActions(true)
+            ear.transform = target
+            CATransaction.commit()
+        }
+    }
+
+    /// Moves the ears through `turns` (outward, in radians) and `lifts`
+    /// (their height, 1 as drawn), on top of where they rest. Nil for an ear
+    /// leaves it be.
+    private func moveEars(left: [CGFloat]?, right: [CGFloat]?, lifts: [CGFloat]? = nil, keyTimes: [Double],
+                          duration: TimeInterval, after delay: TimeInterval = 0, key: String = "react") {
+        guard look.style == .cat, !reduceMotion, size > 0 else { return }
+        let rest = earRest
+        for (ear, turns, isLeft) in [(leftEar, left, true), (rightEar, right, false)] {
+            guard let turns else { continue }
+            let motion = CAKeyframeAnimation(keyPath: "transform")
+            motion.values = turns.indices.map { index in
+                NSValue(caTransform3D: earTransform(rest + turns[index], left: isLeft, lift: lifts?[index] ?? 1))
+            }
+            motion.keyTimes = keyTimes.map { NSNumber(value: $0) }
+            motion.timingFunction = CAMediaTimingFunction(name: .easeInEaseOut)
+            motion.duration = duration
+            if delay > 0 { motion.beginTime = CACurrentMediaTime() + delay }
+            ear.add(motion, forKey: key)
+        }
+    }
+
+    /// One ear twitches: a quick flick out and back, as a cat's does at a sound.
+    private func flickEar(left: Bool, after delay: TimeInterval = 0) {
+        let flick: [CGFloat] = [0, 0.42, -0.08, 0.18, 0]
+        moveEars(left: left ? flick : nil, right: left ? nil : flick, keyTimes: [0, 0.22, 0.5, 0.72, 1],
+                 duration: 0.36, after: delay, key: "flick")
+    }
+
+    /// What the ears do for each reaction, alongside the face and the hop.
+    private func earsReact(_ reaction: NotchMascotReaction) {
+        guard look.style == .cat else { return }
+        switch reaction {
+        case .celebrate:
+            // Up and wiggling.
+            let wiggle: [CGFloat] = [0, -0.2, 0.18, -0.14, 0.1, 0]
+            moveEars(left: wiggle, right: wiggle, lifts: [1, 1.15, 1.1, 1.1, 1.05, 1],
+                     keyTimes: [0, 0.2, 0.4, 0.6, 0.8, 1], duration: 0.8)
+        case .love:
+            // Soft and relaxed, leaning out, as it is petted.
+            moveEars(left: [0, 0.38, 0.38, 0], right: [0, 0.38, 0.38, 0], keyTimes: [0, 0.2, 0.8, 1], duration: 1.4)
+        case .surprised, .perk:
+            // Straight up and tall.
+            moveEars(left: [0, -0.18, -0.12, 0], right: [0, -0.18, -0.12, 0], lifts: [1, 1.25, 1.15, 1],
+                     keyTimes: [0, 0.15, 0.7, 1], duration: reaction.length)
+        case .bounce:
+            moveEars(left: [0, -0.15, 0.1, -0.15, 0.08, 0], right: [0, -0.15, 0.1, -0.15, 0.08, 0],
+                     lifts: [1, 1.2, 1, 1.2, 1, 1], keyTimes: [0, 0.14, 0.32, 0.46, 0.63, 1], duration: 0.95)
+        case .flash:
+            // Flat back at the flash, then up.
+            moveEars(left: [0, 0.6, 0.6, -0.1, 0], right: [0, 0.6, 0.6, -0.1, 0], keyTimes: [0, 0.18, 0.42, 0.7, 1],
+                     duration: 0.5)
+        case .confused:
+            // One ear up, one down: the head tilt of a puzzled cat.
+            moveEars(left: [0, -0.12, -0.12, 0], right: [0, 0.55, 0.55, 0], keyTimes: [0, 0.2, 0.8, 1],
+                     duration: reaction.length)
+        case .wakeUp:
+            // Up from flat as it stretches, then a twitch.
+            moveEars(left: [0.5, 0.5, -0.12, 0], right: [0.5, 0.5, -0.12, 0], lifts: [1, 1, 1.15, 1],
+                     keyTimes: [0, 0.3, 0.6, 1], duration: 1.0)
+            flickEar(left: Bool.random(), after: 1.1)
+        case .yawn:
+            moveEars(left: [0, 0.45, 0.45, 0], right: [0, 0.45, 0.45, 0], keyTimes: [0, 0.3, 0.75, 1], duration: 1.2)
+        case .hush:
+            // Flattened right down while the sound goes away.
+            moveEars(left: [0, 0.75, 0.75, 0], right: [0, 0.75, 0.75, 0], lifts: [1, 0.85, 0.85, 1],
+                     keyTimes: [0, 0.22, 0.78, 1], duration: 0.95)
+        case .ready:
+            // Pointed forward, focused.
+            moveEars(left: [0, -0.22, -0.22, 0], right: [0, -0.22, -0.22, 0], lifts: [1, 1.12, 1.12, 1],
+                     keyTimes: [0, 0.2, 0.8, 1], duration: 1.0)
+        case .groove:
+            // One ear on each beat, in turn.
+            let beats = 4
+            var left: [CGFloat] = [], right: [CGFloat] = [], times: [Double] = []
+            for step in 0...(beats * 2) {
+                times.append(Double(step) / Double(beats * 2))
+                let up = step % 2 == 1
+                left.append(up && step % 4 == 1 ? 0.35 : 0)
+                right.append(up && step % 4 == 3 ? 0.35 : 0)
+            }
+            moveEars(left: left, right: right, keyTimes: times, duration: reaction.length)
+        }
+    }
+
     /// Positive flattens it on the ground, negative stretches it up, and its
     /// bottom stays where it was.
     private func squashed(_ amount: CGFloat) -> CATransform3D {
@@ -501,6 +667,7 @@ final class NotchMascotRig: NSObject {
         blinks = 0
         let now = CACurrentMediaTime()
         glowBulb(for: reaction.length)
+        earsReact(reaction)
         guard !reduceMotion else {
             switch reaction {
             case .celebrate, .wakeUp: flashFace(.happy, duration: 1)
@@ -803,6 +970,10 @@ final class NotchMascotRig: NSObject {
             glance.isAdditive = true
             glance.beginTime = blink.beginTime - 1.1
             attention.add(glance, forKey: "idleGlance")
+        }
+        // A cat's ear twitches now and then while it rests.
+        if look.style == .cat, !reduceMotion, Double.random(in: 0...1) < 0.3 {
+            flickEar(left: Bool.random(), after: max(0, blink.beginTime - now - 0.6))
         }
         let relay = NotchMascotAnimationRelay(target: self)
         blinkRelay = relay

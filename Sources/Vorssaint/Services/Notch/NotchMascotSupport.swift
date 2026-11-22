@@ -5,14 +5,15 @@ import CoreGraphics
 import Foundation
 
 // The companion is a small friend who lives in the Dynamic Island: a colored
-// shape with two ink eyes and no mouth, or a little robot. It rests beside
+// shape with two ink eyes and no mouth, a little robot, or a cat whose ears
+// move with every reaction. It rests beside
 // the camera when the closed island has nothing else to show, passes by now
 // and then, and is the Command Bar's face when the bar comes out of the
 // island. The code calls it the mascot, because "companion" already names
 // the second activity sharing the closed island.
 
 enum NotchMascotStyle: String, CaseIterable, Identifiable {
-    case minimal, robot
+    case minimal, robot, cat
 
     var id: String { rawValue }
 }
@@ -37,6 +38,8 @@ struct NotchMascotColor: Equatable {
     /// The robot's face plate, where its lit eyes sit.
     static let visor = NotchMascotColor(red: 0.09, green: 0.09, blue: 0.11)
     static let shine = NotchMascotColor(red: 1, green: 1, blue: 1, alpha: 0.55)
+    /// The cat's inner ears and nose.
+    static let blush = NotchMascotColor(red: 0.98, green: 0.60, blue: 0.70)
 }
 
 /// The colors it comes in, in the order of the rainbow after white, so the
@@ -322,6 +325,12 @@ extension NotchMascotLook {
                                          shineCenter: CGPoint(x: 0.27, y: 0.34), shineRadii: CGSize(width: 0.07, height: 0.04),
                                          shineAngle: -0.3)
         }
+        if style == .cat {
+            return NotchMascotFaceLayout(leftEye: CGPoint(x: 0.355, y: 0.62), rightEye: CGPoint(x: 0.645, y: 0.62),
+                                         eyeSize: CGSize(width: 0.085, height: 0.165),
+                                         shineCenter: CGPoint(x: 0.27, y: 0.45), shineRadii: CGSize(width: 0.065, height: 0.04),
+                                         shineAngle: -0.55)
+        }
         switch shape {
         case .ball:
             return NotchMascotFaceLayout(leftEye: CGPoint(x: 0.36, y: 0.50), rightEye: CGPoint(x: 0.64, y: 0.50),
@@ -404,6 +413,10 @@ enum NotchMascotGeometry {
             let parts = robot(size: 1)
             bounds = [parts.ears, parts.antenna, parts.bulb]
                 .reduce(parts.head.boundingBoxOfPath) { $0.union($1.boundingBoxOfPath) }
+        } else if look.style == .cat {
+            let parts = cat(size: 1)
+            bounds = parts.head.boundingBoxOfPath.union(parts.leftEar.boundingBoxOfPath)
+                .union(parts.rightEar.boundingBoxOfPath)
         } else {
             bounds = body(look.shape, size: 1).boundingBoxOfPath
         }
@@ -425,6 +438,73 @@ enum NotchMascotGeometry {
                      antenna: rounded(rect(0.475, 0.12, 0.05, 0.16), 0.025),
                      bulb: CGPath(ellipseIn: rect(0.43, 0.04, 0.14, 0.14), transform: nil),
                      visor: rounded(rect(0.20, 0.44, 0.60, 0.38), 0.15))
+    }
+
+    /// The cat's head, its two ears with their pink insides, the nose and
+    /// the whiskers. Each ear turns on its own around `leftEarBase` and
+    /// `rightEarBase`, where it meets the head, so it can perk up, flatten
+    /// or twitch while the head stays put.
+    struct Cat {
+        let head: CGPath
+        let leftEar: CGPath
+        let rightEar: CGPath
+        let leftInner: CGPath
+        let rightInner: CGPath
+        let leftEarBase: CGPoint
+        let rightEarBase: CGPoint
+        let nose: CGPath
+        let whiskers: CGPath
+    }
+
+    static func cat(size: CGFloat) -> Cat {
+        func point(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: x * size, y: y * size) }
+        func mirrored(_ points: [CGPoint]) -> [CGPoint] { points.map { CGPoint(x: size - $0.x, y: $0.y) } }
+        // A wide superellipse: full cheeks, a flatter crown for the ears.
+        let head = CGMutablePath()
+        let count = 72
+        for index in 0..<count {
+            let angle = CGFloat(index) / CGFloat(count) * 2 * .pi
+            let cosine = cos(angle), sine = sin(angle)
+            let exponent: CGFloat = 2 / 2.6
+            let x = 0.5 + 0.41 * (cosine < 0 ? -1 : 1) * pow(abs(cosine), exponent)
+            let y = 0.63 + 0.31 * (sine < 0 ? -1 : 1) * pow(abs(sine), exponent)
+            if index == 0 { head.move(to: point(x, y)) } else { head.addLine(to: point(x, y)) }
+        }
+        head.closeSubpath()
+        let ear = [point(0.13, 0.58), point(0.17, 0.12), point(0.48, 0.38)]
+        let inner = [point(0.20, 0.52), point(0.205, 0.22), point(0.40, 0.40)]
+        let nose = [point(0.455, 0.735), point(0.545, 0.735), point(0.5, 0.785)]
+        let whiskers = CGMutablePath()
+        for (from, to) in [((0.23, 0.745), (0.01, 0.705)), ((0.23, 0.795), (0.03, 0.845))] {
+            for flip in [false, true] {
+                let a = point(flip ? 1 - from.0 : from.0, from.1), b = point(flip ? 1 - to.0 : to.0, to.1)
+                whiskers.move(to: a)
+                whiskers.addLine(to: b)
+            }
+        }
+        return Cat(head: head,
+                   leftEar: roundedPolygon(ear, radius: 0.05 * size),
+                   rightEar: roundedPolygon(mirrored(ear), radius: 0.05 * size),
+                   leftInner: roundedPolygon(inner, radius: 0.03 * size),
+                   rightInner: roundedPolygon(mirrored(inner), radius: 0.03 * size),
+                   leftEarBase: point(0.29, 0.50),
+                   rightEarBase: point(0.71, 0.50),
+                   nose: roundedPolygon(nose, radius: 0.014 * size),
+                   whiskers: whiskers)
+    }
+
+    /// A polygon with its corners rounded off by `radius`.
+    private static func roundedPolygon(_ points: [CGPoint], radius: CGFloat) -> CGPath {
+        let path = CGMutablePath()
+        guard points.count > 2 else { return path }
+        let last = points[points.count - 1], first = points[0]
+        path.move(to: CGPoint(x: (last.x + first.x) / 2, y: (last.y + first.y) / 2))
+        for index in points.indices {
+            let corner = points[index], next = points[(index + 1) % points.count]
+            path.addArc(tangent1End: corner, tangent2End: next, radius: radius)
+        }
+        path.closeSubpath()
+        return path
     }
 
     /// The highlight, an ellipse leaning with the body's curve.

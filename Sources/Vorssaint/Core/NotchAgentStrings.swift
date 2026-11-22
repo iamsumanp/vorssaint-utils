@@ -57,6 +57,10 @@ struct NotchAgentStrings {
     let liveTitle: String
     let liveActivity: String
     let readout: String
+    /// How a working agent is shown. Only English is translated.
+    var indicator = "Working indicator"
+    var indicatorMark = "Agent logo"
+    var indicatorPulse = "Pulse dot"
     let readoutElapsed: String
     let readoutTokens: String
     let readoutLimit: String
@@ -148,6 +152,10 @@ struct NotchAgentStrings {
         case .activity: return activityCard
         case .resets: return resetsCard
         }
+    }
+
+    func indicator(_ indicator: NotchAgentIndicator) -> String {
+        indicator == .pulse ? indicatorPulse : indicatorMark
     }
 
     func readout(_ readout: NotchAgentReadout) -> String {

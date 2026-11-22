@@ -142,19 +142,28 @@ struct NotchAgentPulse: View {
 }
 
 /// The agent's mark breathing while it works. A turn would read as a
-/// cross halfway round, so the mark keeps its angle.
+/// cross halfway round, so the mark keeps its angle. With the pulse chosen
+/// in Settings, a working agent shows as a dot in its color instead.
 struct NotchAgentGlyph: View {
     let provider: AgentProvider
     var size: CGFloat = 13
     var working = true
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage(DefaultsKey.notchAgentsIndicator) private var indicator = NotchAgentIndicator.mark.rawValue
 
     var body: some View {
-        NotchAgentGlyphBridge(provider: provider, size: size, animates: working && !reduceMotion)
-            // Room for the widest mark, the Claude one, drawn past its size.
-            .frame(width: size * 1.45 + 1, height: size * 1.45 + 1)
-            .accessibilityHidden(true)
-            .allowsHitTesting(false)
+        Group {
+            if working, indicator == NotchAgentIndicator.pulse.rawValue {
+                // The ring spreads to about twice the dot, inside the mark's room.
+                NotchAgentPulseBridge(tint: NSColor(provider.tint), size: size * 0.62, animates: !reduceMotion)
+            } else {
+                NotchAgentGlyphBridge(provider: provider, size: size, animates: working && !reduceMotion)
+            }
+        }
+        // Room for the widest mark, the Claude one, drawn past its size.
+        .frame(width: size * 1.45 + 1, height: size * 1.45 + 1)
+        .accessibilityHidden(true)
+        .allowsHitTesting(false)
     }
 }
 

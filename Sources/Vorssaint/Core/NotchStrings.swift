@@ -96,6 +96,8 @@ struct NotchStrings {
     let translucentBackground: String
     let translucentBackgroundHint: String
     let translucentBackgroundGlassHint: String
+    /// How black the see-through island stays. Only English is translated.
+    var translucentDarkness = "Darkness"
 }
 
 extension FeatureStrings {

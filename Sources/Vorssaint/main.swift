@@ -31,6 +31,9 @@ if CommandLine.arguments.contains("--uninstall") {
 // that from a shell whose host app lacks a Bluetooth usage description. The
 // commands above come first, so `--selftest` beside a probe mode runs the
 // selftest, not the probe.
+if CommandLine.arguments.contains(NotchMascotProbe.argument) {
+    NotchMascotProbe.runAndExit()
+}
 if NotchPresentationProbe.isRequested(by: CommandLine.arguments) {
     NotchPresentationProbe.runAndExit()
 }

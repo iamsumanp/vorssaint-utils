@@ -20,6 +20,7 @@ struct NotchAgentsSettingsControls: View {
     @AppStorage(DefaultsKey.notchAgentsLimitFocus) private var limitFocus = NotchAgentLimitFocus.mostUsed.rawValue
     @AppStorage(DefaultsKey.notchAgentsLiveActivity) private var liveActivity = true
     @AppStorage(DefaultsKey.notchAgentsReadout) private var readout = NotchAgentReadout.elapsed.rawValue
+    @AppStorage(DefaultsKey.notchAgentsIndicator) private var indicator = NotchAgentIndicator.mark.rawValue
     @AppStorage(DefaultsKey.notchAgentsFinishAlert) private var finishAlert = true
     @AppStorage(DefaultsKey.notchAgentsFinishMinimum) private var finishMinimum = NotchAgentSupport.defaultFinishMinimum
     @AppStorage(DefaultsKey.notchAgentsLimitAlert) private var limitAlert = true
@@ -96,6 +97,12 @@ struct NotchAgentsSettingsControls: View {
                 SettingsMenuRow(symbol: "camera.metering.center.weighted", title: text.readout, selection: $readout) {
                     ForEach(NotchAgentReadout.allCases) { option in
                         Text(text.readout(option)).tag(option.rawValue)
+                    }
+                }
+                .padding(.leading, settingsRowTextInset)
+                SettingsChoiceRow(symbol: "smallcircle.filled.circle", title: text.indicator, selection: $indicator) {
+                    ForEach(NotchAgentIndicator.allCases) { option in
+                        Text(text.indicator(option)).tag(option.rawValue)
                     }
                 }
                 .padding(.leading, settingsRowTextInset)

@@ -41,6 +41,13 @@ enum NotchAgentReadout: String, CaseIterable, Identifiable {
     var advancesWithClock: Bool { self == .elapsed || self == .limit }
 }
 
+/// What shows an agent at work: its own mark breathing, or a plain dot in
+/// its color with a ring pulsing out of it.
+enum NotchAgentIndicator: String, CaseIterable, Identifiable {
+    case mark, pulse
+    var id: String { rawValue }
+}
+
 enum NotchAgentLimitDisplay: String, CaseIterable, Identifiable {
     case remaining, used
     var id: String { rawValue }

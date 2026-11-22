@@ -50,6 +50,9 @@ enum MetricsFeatureTests {
         expectEqual(MetricFormat.diskBytes(1_000_204_845_056), "1.0 TB", "disk bytes show decimal terabytes")
         expectEqual(MetricFormat.diskBytes(123_456_789_000), "123 GB", "disk bytes match Finder-style GB")
         expectEqual(MetricFormat.diskBytes(1_000_000_000), "1.0 GB", "disk bytes keep the decimal 1000 base")
+        expectEqual(MetricFormat.diskBytes(15_400_000_000), "15.4 GB", "free space keeps a decimal below 100")
+        expectEqual(MetricFormat.diskBytes(12_522_393_600), "12.5 GB", "free space is not rounded up to a whole GB")
+        expectEqual(MetricFormat.diskBytes(99_960_000_000), "100 GB", "a value that rounds to 100 drops the decimal")
         expectEqual(MetricFormat.diskBytesPrecise(14_878_047_232_000), "14.88 TB",
                     "precise disk bytes keep SMART totals readable")
 

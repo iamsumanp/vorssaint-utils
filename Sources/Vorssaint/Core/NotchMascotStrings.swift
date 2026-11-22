@@ -11,6 +11,8 @@ struct NotchMascotStrings {
     let style: String
     let minimal: String
     let robot: String
+    /// The cat style. Only English is translated, so other languages show it in English.
+    var cat = "Cat"
     let shape: String
     let ball: String
     let egg: String
@@ -68,7 +70,11 @@ struct NotchMascotStrings {
     let keywords: String
 
     func style(_ style: NotchMascotStyle) -> String {
-        style == .robot ? robot : minimal
+        switch style {
+        case .minimal: return minimal
+        case .robot: return robot
+        case .cat: return cat
+        }
     }
 
     func shape(_ shape: NotchMascotShape) -> String {
@@ -123,7 +129,7 @@ struct NotchMascotStrings {
 
     /// What a search finds its page by, besides its name.
     var searchKeywords: [String] {
-        [hint, visits, reactions, hidesWhenIdle, appearance, style, robot, color, behavior,
+        [hint, visits, reactions, hidesWhenIdle, appearance, style, robot, cat, color, behavior,
          commandBar, keywords]
     }
 

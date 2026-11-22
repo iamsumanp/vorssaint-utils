@@ -887,6 +887,7 @@ enum DefaultsKey {
     static let notchCameraFitHeight = "notchCameraFitHeight"
     static let notchHapticFeedback = "notchHapticFeedback"
     static let notchTranslucentBackground = "notchTranslucentBackground"
+    static let notchTranslucentDarkness = "notchTranslucentDarkness" // 0...1, how black the see-through island stays
     static let notchShelf = "notchShelf"
     static let notchDragReveal = "notchDragReveal"
     static let notchCaptureControls = "notchCaptureControls"
@@ -948,6 +949,7 @@ enum DefaultsKey {
     static let notchAgentsLimitFocus = "notchAgentsLimitFocus"
     static let notchAgentsLiveActivity = "notchAgentsLiveActivity"
     static let notchAgentsReadout = "notchAgentsReadout"
+    static let notchAgentsIndicator = "notchAgentsIndicator" // NotchAgentIndicator.rawValue
     static let notchAgentsFinishAlert = "notchAgentsFinishAlert"
     static let notchAgentsFinishMinimum = "notchAgentsFinishMinimum"
     static let notchAgentsLimitAlert = "notchAgentsLimitAlert"
@@ -1513,6 +1515,7 @@ enum Defaults {
         DefaultsKey.notchCameraFitHeight: 0.0,
         DefaultsKey.notchHapticFeedback: true,
         DefaultsKey.notchTranslucentBackground: false,
+        DefaultsKey.notchTranslucentDarkness: NotchTranslucentTint.defaultDarkness,
         DefaultsKey.notchShelf: true,
         DefaultsKey.notchDragReveal: true,
         DefaultsKey.notchCaptureControls: true,
@@ -1559,6 +1562,7 @@ enum Defaults {
         DefaultsKey.notchAgentsLimitFocus: NotchAgentLimitFocus.mostUsed.rawValue,
         DefaultsKey.notchAgentsLiveActivity: true,
         DefaultsKey.notchAgentsReadout: NotchAgentReadout.elapsed.rawValue,
+        DefaultsKey.notchAgentsIndicator: NotchAgentIndicator.mark.rawValue,
         DefaultsKey.notchAgentsFinishAlert: true,
         DefaultsKey.notchAgentsFinishMinimum: NotchAgentSupport.defaultFinishMinimum,
         DefaultsKey.notchAgentsLimitAlert: true,

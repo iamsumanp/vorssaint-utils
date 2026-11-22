@@ -196,7 +196,9 @@ enum MetricFormat {
         if units[index] == "B" {
             return String(format: "%.0f B", locale: Self.locale, value)
         }
-        return value < 10 ? String(format: "%.1f %@", locale: Self.locale, value, units[index])
+        // One decimal below 100, as disk tools such as Stats show free space:
+        // 15.4 GB read as "15 GB" before, which hid most of a gigabyte.
+        return (value * 10).rounded() / 10 < 100 ? String(format: "%.1f %@", locale: Self.locale, value, units[index])
             : String(format: "%.0f %@", locale: Self.locale, value, units[index])
     }
 
