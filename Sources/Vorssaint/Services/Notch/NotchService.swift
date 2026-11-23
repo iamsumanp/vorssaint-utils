@@ -1198,9 +1198,6 @@ final class NotchService: ObservableObject {
 
     func syncWithPreferences() {
         preferenceSyncWork?.cancel(); preferenceSyncWork = nil
-        // Fork: the Peaky-style island takes Vorssaint's place when chosen.
-        if PKIslands.isOn { stop(); PKIslands.shared.sync(); return }
-        PKIslands.shared.stop()
         guard NotchSupport.isEnabled() else { stop(); return }
         if !running {
             running = true

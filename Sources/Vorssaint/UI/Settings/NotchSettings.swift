@@ -43,8 +43,6 @@ struct NotchSettings: View {
     @AppStorage(DefaultsKey.notchOpenOnHover) private var hover = false
     @AppStorage(DefaultsKey.notchShortcutEnabled) private var shortcutEnabled = false
     @AppStorage(DefaultsKey.notchHideInFullscreen) private var hideInFullscreen = false
-    @AppStorage(DefaultsKey.forkPeakyIsland) private var peakyIsland = false
-    @AppStorage(DefaultsKey.forkPeakyIslandPet) private var peakyPet = "cat"
     @AppStorage(DefaultsKey.notchHoverInFullscreen) private var hoverInFullscreen = false
     @AppStorage(DefaultsKey.notchHideUntilHover) private var hideUntilHover = false
     @AppStorage(DefaultsKey.notchHiddenShowsActivity) private var hiddenShowsActivity = false
@@ -726,23 +724,6 @@ struct NotchSettings: View {
                     .labelsHidden()
                 }
                 switchRow("livephoto", editor.openActivity, caption: editor.openActivityHint, isOn: $opensActivity)
-            }
-            SettingsCard(title: text.peakyIsland) {
-                switchRow("capsule.portrait", text.peakyIsland, caption: text.peakyIslandHint, isOn: $peakyIsland)
-                    .onChange(of: peakyIsland) { _, _ in NotchService.shared.syncWithPreferences() }
-                if peakyIsland {
-                    HStack {
-                        Text(text.peakyPet)
-                        Spacer()
-                        Picker(text.peakyPet, selection: $peakyPet) {
-                            ForEach(PKPetKind.allCases) { Text($0.name).tag($0.rawValue) }
-                        }
-                        .pickerStyle(.menu)
-                        .labelsHidden()
-                        .fixedSize()
-                    }
-                    .padding(.leading, settingsRowTextInset)
-                }
             }
             SettingsCard(title: text.display) {
                 switchRow("arrow.up.left.and.arrow.down.right", text.hideInFullscreen, isOn: $hideInFullscreen)

@@ -302,7 +302,7 @@ enum SettingsDirectory {
             .init([notchEditor.behavior, notchEditor.opening, s.quickToolShortcutToggle,
                    FeatureStrings.notchGestures(language).title, notch.hapticFeedback, notchEditor.reopening,
                    notchEditor.openActivity, notch.display, notch.hideInFullscreen, notch.eachDisplay, notch.showOnThisDisplay,
-                   notch.overFullscreen, notch.peakyIsland, notch.peakyPet, notchEditor.destinations,
+                   notch.overFullscreen, notchEditor.destinations,
                    notch.panel, notch.tools, notch.files, notch.captures, notchEditor.privacy, notch.showInCaptures,
                    notchEditor.hideMenuBarIcon], notch: .behavior),
             .init([notchEditor.hiddenShowsActivity], notch: .behavior, when: hover && state.on(DefaultsKey.notchHideUntilHover)),
