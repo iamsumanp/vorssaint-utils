@@ -869,6 +869,9 @@ enum DefaultsKey {
     static let notchMusicShowVolume = "notchMusicShowVolume"
     /// Whether a display without a camera names the song between the cover and the bars.
     static let notchMusicTitleWithoutCamera = "notchMusicTitleWithoutCamera"
+    /// Fork: the Peaky-style island in place of Vorssaint's own, and its pet.
+    static let forkPeakyIsland = "forkPeakyIsland"
+    static let forkPeakyIslandPet = "forkPeakyIslandPet"
     static let notchPreferredPlayer = "notchPreferredPlayer"
     static let notchDefaultProfileInitialized = "notchDefaultProfileInitialized" // local migration marker; never backed up
     static let notchInitialExtensionsInstalled = "notchInitialExtensionsInstalled" // local first-install marker; never backed up
@@ -1509,6 +1512,8 @@ enum Defaults {
         DefaultsKey.notchIncludeOtherPlayers: true,
         DefaultsKey.notchMusicShowVolume: false,
         DefaultsKey.notchMusicTitleWithoutCamera: true,
+        DefaultsKey.forkPeakyIsland: false,
+        DefaultsKey.forkPeakyIslandPet: "cat",
         DefaultsKey.notchPreferredPlayer: "",
         DefaultsKey.notchIdleContent: NotchIdleContent.music.rawValue,
         DefaultsKey.notchHiddenControls: NotchControlItem.defaultHidden,

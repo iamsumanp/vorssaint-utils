@@ -47,6 +47,10 @@ struct NotchStrings {
     var overFullscreen = "Over full screen"
     var eachDisplayHint = "Show applies while the island follows the pointer or shows on all displays. Over full screen keeps it on that display while a full-screen app is open."
     var builtInTag = "Built-in"
+    /// Fork: the Peaky-style island. Only English is translated.
+    var peakyIsland = "Peaky-style island"
+    var peakyIslandHint = "A small Peaky island: what’s playing, a meeting just before it starts, Claude working, and the shelf. Click to open; hovering does nothing."
+    var peakyPet = "Island pet"
     let hoverInFullscreen: String
     let showInCaptures: String
     let clipboardWindow: String
