@@ -858,8 +858,14 @@ final class NotchService: ObservableObject {
         let marks = CGFloat(max(1, working)) * frame + CGFloat(max(0, working - 1))
             + provisional.compactActivityEdgeInset(boxHeight: mark + 4, radius: (mark + 4) / 2)
         // The pulse dot takes the reading's side, so only marks need room.
-        let pulses = UserDefaults.standard.string(forKey: DefaultsKey.notchAgentsIndicator)
-            == NotchAgentIndicator.pulse.rawValue
+        let indicator = UserDefaults.standard.string(forKey: DefaultsKey.notchAgentsIndicator)
+        let pulses = indicator == NotchAgentIndicator.pulse.rawValue
+        // The pet's side holds a pet up to 20 points wide.
+        let pet = min(20, max(10, provisional.compactActivityContentHeight - 2)) + 6
+            + provisional.compactActivityEdgeInset(boxHeight: mark + 4, radius: (mark + 4) / 2)
+        if indicator == NotchAgentIndicator.spin.rawValue {
+            return max(marks, pet) + NotchAgentSupport.stripCameraGap
+        }
         return (pulses ? marks : max(reading, marks)) + NotchAgentSupport.stripCameraGap
     }
 

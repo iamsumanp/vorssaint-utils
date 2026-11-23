@@ -45,6 +45,8 @@ enum NotchAgentReadout: String, CaseIterable, Identifiable {
 /// its color with a ring pulsing out of it.
 enum NotchAgentIndicator: String, CaseIterable, Identifiable {
     case mark, pulse
+    /// The pet beside the camera, the logo turning slowly on the other side.
+    case spin
     var id: String { rawValue }
 }
 

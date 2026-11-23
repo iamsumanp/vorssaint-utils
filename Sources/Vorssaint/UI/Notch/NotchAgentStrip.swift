@@ -45,6 +45,34 @@ struct NotchAgentStrip: View {
         // and each working agent's dot pulses right of it, in place of the
         // reading. The agent logo option keeps logo and reading.
         let pulses = indicator == NotchAgentIndicator.pulse.rawValue
+        // Pet + spinning logo: the pet keeps its side of the camera and the
+        // working logos turn on the other.
+        let spins = indicator == NotchAgentIndicator.spin.rawValue
+        let petOnRight = UserDefaults.standard.string(forKey: DefaultsKey.notchMascotSide) == NotchMascotSide.right.rawValue
+        let petShown = spins && NotchMascotSupport.isEnabled()
+        let petSize = min(20, max(10, geometry.compactActivityContentHeight - 2))
+        let pet = Button { service.openActivity(.agents) } label: {
+            Group {
+                if petShown, geometry.compactActivityWingWidth >= 24 {
+                    NotchMascotView(look: NotchMascotSupport.look(), size: petSize)
+                }
+            }
+            .padding(petOnRight ? .trailing : .leading, iconInset)
+            .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
+                   alignment: petOnRight ? .trailing : .leading)
+            .contentShape(Rectangle())
+        }
+        let spinning = Button { service.openActivity(.agents) } label: {
+            HStack(spacing: 1) {
+                if geometry.compactActivityWingWidth >= 28 {
+                    ForEach(working) { NotchAgentGlyph(provider: $0, size: iconSize) }
+                }
+            }
+            .padding(petOnRight ? .leading : .trailing, iconInset)
+            .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
+                   alignment: petOnRight ? .leading : .trailing)
+            .contentShape(Rectangle())
+        }
         let marks = Button { service.openActivity(.agents) } label: {
             HStack(spacing: 1) {
                 if geometry.compactActivityWingWidth >= 28 {
@@ -93,9 +121,15 @@ struct NotchAgentStrip: View {
             .contentShape(Rectangle())
         }
         HStack(spacing: 0) {
-            marks
-            Color.clear.frame(width: geometry.compactActivityCameraGap)
-            if pulses { dots } else { readingWing }
+            if spins {
+                if petOnRight { spinning } else { pet }
+                Color.clear.frame(width: geometry.compactActivityCameraGap)
+                if petOnRight { pet } else { spinning }
+            } else {
+                marks
+                Color.clear.frame(width: geometry.compactActivityCameraGap)
+                if pulses { dots } else { readingWing }
+            }
         }
         .frame(height: geometry.compactActivityContentHeight)
         .padding(.horizontal, geometry.compactActivityHorizontalPadding)

@@ -156,6 +156,8 @@ struct NotchAgentGlyph: View {
             if working, indicator == NotchAgentIndicator.pulse.rawValue {
                 // The ring spreads to about twice the dot, inside the mark's room.
                 NotchAgentPulseBridge(tint: NSColor(provider.tint), size: size * 0.62, animates: !reduceMotion)
+            } else if working, indicator == NotchAgentIndicator.spin.rawValue {
+                NotchAgentSpinningMark(provider: provider, size: size, spins: !reduceMotion)
             } else {
                 NotchAgentGlyphBridge(provider: provider, size: size, animates: working && !reduceMotion)
             }
@@ -164,6 +166,22 @@ struct NotchAgentGlyph: View {
         .frame(width: size * 1.45 + 1, height: size * 1.45 + 1)
         .accessibilityHidden(true)
         .allowsHitTesting(false)
+    }
+}
+
+/// The still logo turning once every six seconds at an even speed, as
+/// Claude's own spark does while it thinks.
+private struct NotchAgentSpinningMark: View {
+    let provider: AgentProvider
+    let size: CGFloat
+    let spins: Bool
+    @State private var turned = false
+
+    var body: some View {
+        NotchAgentGlyphBridge(provider: provider, size: size, animates: false)
+            .rotationEffect(.degrees(turned ? 360 : 0))
+            .animation(spins ? .linear(duration: 6).repeatForever(autoreverses: false) : nil, value: turned)
+            .onAppear { if spins { turned = true } }
     }
 }
 

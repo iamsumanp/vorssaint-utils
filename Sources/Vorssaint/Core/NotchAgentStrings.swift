@@ -61,6 +61,7 @@ struct NotchAgentStrings {
     var indicator = "Working indicator"
     var indicatorMark = "Agent logo"
     var indicatorPulse = "Pulse dot"
+    var indicatorSpin = "Pet + spinning logo"
     let readoutElapsed: String
     let readoutTokens: String
     let readoutLimit: String
@@ -155,7 +156,11 @@ struct NotchAgentStrings {
     }
 
     func indicator(_ indicator: NotchAgentIndicator) -> String {
-        indicator == .pulse ? indicatorPulse : indicatorMark
+        switch indicator {
+        case .mark: return indicatorMark
+        case .pulse: return indicatorPulse
+        case .spin: return indicatorSpin
+        }
     }
 
     func readout(_ readout: NotchAgentReadout) -> String {
