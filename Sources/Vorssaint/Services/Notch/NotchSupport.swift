@@ -691,11 +691,15 @@ enum NotchLayout {
     }
     /// The whole player, the same in every preset; with nothing playing it
     /// has no timeline. The optional volume row keeps its full control height.
-    static func musicPlayerHeight(band: CGFloat, playing: Bool = true, showVolume: Bool = false) -> CGFloat {
+    static func musicPlayerHeight(band: CGFloat, playing: Bool = true, showVolume: Bool = false,
+                                  showAgents: Bool = false) -> CGFloat {
         musicHeadHeight(band: band) + musicHeadSpacing
             + (playing ? musicTimelineHeight + rowSpacing : 0) + musicTransportHeight + musicBottomRoom
             + (showVolume ? rowSpacing + levelRowHeight : 0)
+            + (showAgents ? rowSpacing + musicAgentsRowHeight : 0)
     }
+    /// The working agents' row below the player.
+    static let musicAgentsRowHeight: CGFloat = 30
 
     /// How the music page divides its height between the player and an open
     /// extra, lyrics or the queue. The island grows to hold both, so the
@@ -1842,9 +1846,12 @@ enum NotchSupport {
                                   calendar: Bool, music: Bool, keepAwake: Bool = false,
                                   meetingFirst: Bool = false) -> [NotchCompactActivity] {
         let early = meetingFirst && calendar
+        // Fork order: what is playing leads, then a meeting about to start,
+        // and only then downloads and working agents.
+        _ = early
         let candidates: [(Bool, NotchCompactActivity)] = [
-            (timer, .timer), (watch, .watch), (early, .calendar), (downloads, .downloads), (agents, .agents),
-            (calendar && !early, .calendar), (music, .music), (keepAwake, .keepAwake)
+            (timer, .timer), (watch, .watch), (music, .music), (calendar, .calendar), (downloads, .downloads),
+            (agents, .agents), (keepAwake, .keepAwake)
         ]
         return candidates.compactMap { $0.0 ? $0.1 : nil }
     }
@@ -2777,7 +2784,7 @@ struct NotchGeometry: Equatable {
     func expandedSize(module: NotchModule, detail: Bool = false, panel: Bool = false,
                       detailHeight: CGFloat? = nil, shortcutCount: Int = 4,
                       sliderCount: Int = 2, controlsHaveMusic: Bool = true, musicHasContent: Bool = true,
-                      musicShowsVolume: Bool = false,
+                      musicShowsVolume: Bool = false, musicShowsAgents: Bool = false,
                       musicExtraHeight: CGFloat = 0,
                       fileMediaHeight: CGFloat? = nil, systemCards: Int = 6, toolCount: Int? = 8,
                       capturePreviewHeight: CGFloat? = nil,
@@ -2817,7 +2824,8 @@ struct NotchGeometry: Equatable {
                 let player = NotchLayout.musicPlayerHeight(band: musicBandHeight, playing: musicHasContent)
                 // Presets grow for the optional row; a custom height keeps
                 // its limit and the page can scroll to the controls.
-                let volume = musicShowsVolume ? NotchLayout.rowSpacing + NotchLayout.levelRowHeight : 0
+                let volume = (musicShowsVolume ? NotchLayout.rowSpacing + NotchLayout.levelRowHeight : 0)
+                    + (musicShowsAgents ? NotchLayout.rowSpacing + NotchLayout.musicAgentsRowHeight : 0)
                 let room = budget + (layout == .custom ? 0 : volume)
                 contentHeight = min(room, player + volume) + max(0, musicExtraHeight)
             case .system:

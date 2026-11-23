@@ -26,6 +26,8 @@ struct NotchMusicView: View {
     private var showsLyrics: Bool { lyricsEnabled && AppFeature.notchLyrics.isAvailable }
     private var showsQueue: Bool { queueEnabled && AppFeature.notchQueue.isAvailable }
     private var showsVolume: Bool { showVolume && AppFeature.mixer.isAvailable }
+    /// Working agents get a row below the player, read when the page is laid out.
+    private var showsAgents: Bool { !preview && NotchService.shared.musicShowsAgents }
     private var openExtra: MusicExtra? {
         guard service.playback != nil else { return nil }
         switch extra {
@@ -46,7 +48,8 @@ struct NotchMusicView: View {
         let geometry = NotchService.shared.geometry
         let split = NotchLayout.musicSplit(
             height: size.height, extras: extrasHeight,
-            resting: NotchLayout.musicPlayerHeight(band: bandHeight, playing: service.playback != nil, showVolume: showsVolume),
+            resting: NotchLayout.musicPlayerHeight(band: bandHeight, playing: service.playback != nil, showVolume: showsVolume,
+                                              showAgents: showsAgents),
             keepsPlayer: !preview && geometry.layout != .custom, extraOpen: openExtra != nil)
         // With the player gone the list starts below the camera's row, which
         // keeps its toggles; without that row they come back in one of their
@@ -211,6 +214,10 @@ struct NotchMusicView: View {
             NotchAudioControls()
                 .padding(.top, NotchLayout.rowSpacing)
         }
+        if showsAgents {
+            NotchMusicAgentsRow()
+                .padding(.top, NotchLayout.rowSpacing)
+        }
     }
 
     /// Lyrics and the queue are toggles, named by their glyphs as a player's own are.
@@ -289,7 +296,9 @@ struct NotchMusicView: View {
                 }
             } accessory: {
                 // Which player the buttons drive, by its icon, when there is a choice.
-                if service.sources.count > 1 || !service.sourceIsAutomatic {
+                if service.sources.count > 1 {
+                    sourceSwitcher(playback)
+                } else if !service.sourceIsAutomatic {
                     sourceMenu(playback)
                 }
                 // Quiet beside the song, as the timeline's times are. The
@@ -313,6 +322,45 @@ struct NotchMusicView: View {
             Color.clear.frame(height: NotchLayout.musicBottomRoom)
         }
         .modifier(NotchMusicSwipeFeedback())
+    }
+
+    /// Every player with something loaded, one icon each, so YouTube in a
+    /// browser and the Music app can be flipped between: a click shows that
+    /// player. The one shown is bright, the others dimmed; a second click on
+    /// the shown one, once chosen by hand, goes back to Automatic.
+    private func sourceSwitcher(_ playback: NotchPlayback) -> some View {
+        let extras = FeatureStrings.notchMusicExtras(l10n.language)
+        return HStack(spacing: 2) {
+            ForEach(service.sources, id: \.pid) { source in
+                let app = NotchPlayerApps.app(pid: source.pid, bundle: source.bundleIdentifier)
+                let title = source.displayName ?? app.name ?? source.bundleIdentifier
+                let shown = source.pid == playback.track.appPID
+                Button {
+                    if shown { if !service.sourceIsAutomatic { service.selectSource(nil) } }
+                    else { service.selectSource(source.selection) }
+                } label: {
+                    Group {
+                        if let icon = app.icon {
+                            Image(nsImage: icon).resizable().interpolation(.high)
+                        } else {
+                            Image(systemName: "app").font(.system(size: 13)).foregroundStyle(.secondary)
+                        }
+                    }
+                    .frame(width: 18, height: 18)
+                    .opacity(shown ? 1 : 0.4)
+                    .overlay(alignment: .bottom) {
+                        Circle().fill(.white.opacity(source.isPlaying ? 0.9 : 0)).frame(width: 3, height: 3).offset(y: 4)
+                    }
+                    .padding(3)
+                    .background(.white.opacity(shown ? 0.12 : 0), in: RoundedRectangle(cornerRadius: 6, style: .continuous))
+                    .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+                }
+                .buttonStyle(NotchButtonStyle(cornerRadius: 6))
+                .help("\(extras.playbackSource): \(title)")
+                .accessibilityLabel(title)
+                .accessibilityAddTraits(shown ? .isSelected : [])
+            }
+        }
     }
 
     /// The player the buttons drive, as its icon, opening the same choice.

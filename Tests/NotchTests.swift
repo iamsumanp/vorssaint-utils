@@ -2336,7 +2336,7 @@ enum NotchTests {
         let companionAndMusic = NotchSupport.compactActivities(
             timer: false, downloads: false, agents: true, calendar: false,
             music: NotchSupport.showsMusicActivity(isPlaying: true, in: defaults))
-        suite.expect(companionAndMusic == [.agents, .music],
+        suite.expect(companionAndMusic == [.music, .agents],
                      "music remains selectable beside a live AI activity while the companion yields")
         defaults.set(savedMascotAvailability, forKey: AppFeature.notchMascot.availabilityKey)
         defaults.set(savedMascotEnabled, forKey: DefaultsKey.notchMascotEnabled)
@@ -3930,10 +3930,10 @@ enum NotchTests {
                         .hasPrefix("·")
                      && endText == "→\u{2009}" + meeting.end.formatted(.dateTime.hour().minute().locale(posix)),
                      "the time beside the clock is when the next event starts or when the current one ends")
-        suite.expect(NotchCalendarSupport.countdownText(until: now.addingTimeInterval(hour), now: now) == "60:00"
-                     && NotchCalendarSupport.countdownText(until: now.addingTimeInterval(61), now: now) == "1:01"
-                     && NotchCalendarSupport.countdownText(until: now, now: now) == "0:00",
-                     "the compact clock includes seconds and never shows negative time")
+        suite.expect(NotchCalendarSupport.countdownText(until: now.addingTimeInterval(hour), now: now) == "60 min"
+                     && NotchCalendarSupport.countdownText(until: now.addingTimeInterval(61), now: now) == "2 min"
+                     && NotchCalendarSupport.countdownText(until: now, now: now) == "0 min",
+                     "the compact clock reads whole minutes and never shows negative time")
         let physical = NotchGeometry(screen: CGRect(x: 0, y: 0, width: 1440, height: 900),
                                      safeAreaTop: 32, cameraWidth: 180, compactSideRoom: 120)
         let calendarWings = physical.compactCalendarGeometry

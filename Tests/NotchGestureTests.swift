@@ -22,11 +22,11 @@ enum NotchGestureTests {
                                                     musicSurface: false, control: false, scroll: false),
                "the resting island and expanded header keep their vertical gestures")
         suite.expect(NotchSupport.compactActivity(timer: true, downloads: true, music: true) == .timer
-               && NotchSupport.compactActivity(timer: false, downloads: true, music: true) == .downloads
+               && NotchSupport.compactActivity(timer: false, downloads: true, music: true) == .music
                && NotchSupport.compactActivity(timer: false, downloads: false, agents: true,
-                                               calendar: true, music: true) == .agents
-               && NotchSupport.compactActivity(timer: false, downloads: false,
-                                               calendar: true, music: true) == .calendar
+                                               calendar: true, music: true) == .music
+               && NotchSupport.compactActivity(timer: false, downloads: false, agents: true,
+                                               calendar: true, music: false) == .calendar
                && NotchSupport.compactActivity(timer: false, downloads: false, music: true) == .music
                && NotchSupport.compactActivity(timer: false, downloads: false, music: false) == nil,
                "rendering and gestures use the same compact activity priority")

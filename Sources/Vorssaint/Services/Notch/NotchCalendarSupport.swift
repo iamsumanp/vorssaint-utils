@@ -323,7 +323,7 @@ enum NotchCalendarSupport {
     static func countdownShape(leadTime: TimeInterval) -> String {
         let minutes = leadTime.isFinite
             ? min(Double(countdownLeadRange.upperBound), max(60, ceil(leadTime / 60))) : 60
-        return String(repeating: "0", count: max(2, String(Int(minutes)).count)) + ":00"
+        return String(repeating: "0", count: max(2, String(Int(minutes)).count)) + " min"
     }
 
     /// The time beside the countdown clock in the closed island: when the
@@ -334,8 +334,9 @@ enum NotchCalendarSupport {
     }
 
     static func countdownText(until start: Date, now: Date) -> String {
-        let seconds = max(0, Int(ceil(start.timeIntervalSince(now))))
-        return String(format: "%d:%02d", seconds / 60, seconds % 60)
+        // Whole minutes, as Peaky reads a meeting: "12 min", not a ticking clock.
+        let minutes = max(0, Int(ceil(start.timeIntervalSince(now) / 60)))
+        return "\(minutes) min"
     }
 
     static func countdownAccessibilityText(until start: Date, now: Date, locale: Locale) -> String {

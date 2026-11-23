@@ -924,7 +924,7 @@ final class NotchService: ObservableObject {
         return geometry.expandedSize(module: module, detail: detail, panel: panel, detailHeight: detailHeight,
                                      shortcutCount: shortcuts,
                                      sliderCount: sliders, controlsHaveMusic: controls.contains(.music), musicHasContent: NotchMusicService.shared.playback != nil,
-                                     musicShowsVolume: musicShowsVolume,
+                                     musicShowsVolume: musicShowsVolume, musicShowsAgents: musicShowsAgents,
                                      musicExtraHeight: musicExtraHeight, fileMediaHeight: fileMediaHeight,
                                      systemCards: NotchSupport.systemCardCount(hasBattery: PowerSampler.hasInternalBattery,
                                                                                fans: SystemMonitor.shared.snapshot.fanSpeeds.count),
@@ -1438,7 +1438,7 @@ final class NotchService: ObservableObject {
             let opensActivity = UserDefaults.standard.object(forKey: DefaultsKey.notchOpensActivity) as? Bool ?? true
             let activity = notice?.notificationID != nil ? NotchModule.notifications
                 : opensActivity ? compactActivity?.module : nil
-            if let activity, modules.contains(activity) { return (activity, false, false) }
+            if let activity, modules.contains(activity) { return (activityPage(for: activity), false, false) }
             if UserDefaults.standard.bool(forKey: DefaultsKey.notchReturnHome) {
                 let saved = UserDefaults.standard.string(forKey: DefaultsKey.notchHomeModule) ?? ""
                 switch NotchReopeningDestination(rawValue: saved) {
@@ -1462,7 +1462,20 @@ final class NotchService: ObservableObject {
     /// the reopening choice decides here too.
     func openActivity(_ module: NotchModule) {
         let opensActivity = UserDefaults.standard.object(forKey: DefaultsKey.notchOpensActivity) as? Bool ?? true
-        if opensActivity { open(module) } else { open() }
+        if opensActivity { open(activityPage(for: module)) } else { open() }
+    }
+
+    /// A working agent covers the music in the closed island, but a song
+    /// playing still leads the open one: the player, with the agents in a row
+    /// below it that opens their page.
+    func activityPage(for module: NotchModule) -> NotchModule {
+        guard module == .agents, musicShowsAgents else { return module }
+        return .music
+    }
+
+    /// The music page lists the working agents below the player while a song plays.
+    var musicShowsAgents: Bool {
+        modules.contains(.music) && modules.contains(.agents) && hasAgentActivity && hasMusicActivity
     }
 
     /// Opens the Calendar page scrolled to the countdown's event.

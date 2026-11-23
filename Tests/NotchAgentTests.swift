@@ -3265,10 +3265,10 @@ enum NotchAgentTests {
         suite.expect(NotchSupport.idleContent(in: defaults) == .agents, "the resting island can show AI limits")
         defaults.set(false, forKey: DefaultsKey.notchAgentsEnabled)
         suite.expect(NotchSupport.idleContent(in: defaults) == .none, "resting AI limits leave with the page")
-        suite.expect(NotchSupport.compactActivity(timer: false, downloads: true, agents: true, music: true) == .downloads
-                        && NotchSupport.compactActivity(timer: false, downloads: false, agents: true, music: true) == .agents
+        suite.expect(NotchSupport.compactActivity(timer: false, downloads: true, agents: true, music: false) == .downloads
+                        && NotchSupport.compactActivity(timer: false, downloads: false, agents: true, music: true) == .music
                         && NotchCompactActivity.agents.module == .agents,
-                     "a working agent outranks music but not a download")
+                     "music outranks a working agent, and a download does too")
 
         defaults.set("trend,unknown,trend,spend", forKey: DefaultsKey.notchAgentsCardOrder)
         defaults.set("activity,projects", forKey: DefaultsKey.notchAgentsHiddenCards)

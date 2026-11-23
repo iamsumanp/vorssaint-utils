@@ -302,7 +302,7 @@ enum NotchWatchTests {
         defaults.set(false, forKey: AppFeature.notchWatch.availabilityKey)
         suite.expect(!NotchWatchSupport.isEnabled(in: defaults), "uninstalling the feature turns it off")
         suite.expect(NotchSupport.compactActivities(timer: true, watch: true, downloads: true, agents: false,
-                                                    calendar: false, music: true) == [.timer, .watch, .downloads, .music],
+                                                    calendar: false, music: true) == [.timer, .watch, .music, .downloads],
                      "a watch follows the timer in the closed island's automatic order")
         suite.expect(AppFeature.notchWatch.permissions == [.screenRecording, .notifications],
                      "Watch reads the area, and notifies where the island cannot show itself")

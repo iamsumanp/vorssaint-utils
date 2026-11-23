@@ -179,3 +179,55 @@ struct NotchAgentRestingWing: View {
         }
     }
 }
+
+/// The working agents below the music player: their marks, names and the
+/// strip's reading, in one row that opens the AI page with their stats.
+struct NotchMusicAgentsRow: View {
+    @ObservedObject private var usage = AgentUsageService.shared
+    @ObservedObject private var l10n = L10n.shared
+    @AppStorage(DefaultsKey.notchAgentsReadout) private var readout = NotchAgentReadout.elapsed.rawValue
+    @AppStorage(DefaultsKey.notchAgentsLimitDisplay) private var display = NotchAgentLimitDisplay.remaining.rawValue
+    @AppStorage(DefaultsKey.notchAgentsLimitFocus) private var focus = NotchAgentLimitFocus.mostUsed.rawValue
+
+    var body: some View {
+        let live = usage.snapshot.live
+        let working = AgentProvider.allCases.filter { provider in live.contains { $0.provider == provider } }
+        let tint = working.first?.tint ?? .white
+        Button { NotchService.shared.open(.agents) } label: {
+            HStack(spacing: 8) {
+                HStack(spacing: 3) {
+                    ForEach(working) { NotchAgentGlyph(provider: $0, size: 14) }
+                }
+                Text(working.map(\.displayName).joined(separator: ", "))
+                    .font(.system(size: 12, weight: .semibold))
+                    .lineLimit(1)
+                Spacer(minLength: 6)
+                NotchAgentReadoutTimeline(readout: NotchAgentReadout(rawValue: readout) ?? .elapsed) { date in
+                    Text(reading(at: date))
+                        .font(.system(size: 12, weight: .medium))
+                        .monospacedDigit()
+                        .foregroundStyle(tint)
+                        .lineLimit(1)
+                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 10, weight: .semibold))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 10)
+            .frame(maxWidth: .infinity, minHeight: NotchLayout.musicAgentsRowHeight,
+                   maxHeight: NotchLayout.musicAgentsRowHeight)
+            .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            .contentShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
+        }
+        .buttonStyle(NotchButtonStyle(cornerRadius: 9))
+        .help(FeatureStrings.notchAgents(l10n.language).title)
+        .accessibilityLabel(working.map(\.displayName).joined(separator: ", "))
+        .accessibilityValue(reading(at: Date()))
+    }
+
+    private func reading(at now: Date) -> String {
+        NotchAgentSupport.stripReading(usage.snapshot, readout: NotchAgentReadout(rawValue: readout) ?? .elapsed,
+                                       display: NotchAgentLimitDisplay(rawValue: display) ?? .remaining,
+                                       focus: NotchAgentLimitFocus(rawValue: focus) ?? .mostUsed, now: now)
+    }
+}
