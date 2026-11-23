@@ -781,9 +781,7 @@ final class NotchService: ObservableObject {
         // The widest clock the selected lead can show, so the island keeps its size
         // while the minutes count down.
         let clockSide = width(calendarClockShape, .monospacedDigitSystemFont(ofSize: 13, weight: .medium))
-            + NotchCalendarSupport.stripClockSpacing
-            + max(joinWidth, width(NotchCalendarSupport.timeText(countdown, locale: language.formattingLocale()),
-                                   .monospacedDigitSystemFont(ofSize: 11, weight: .medium)))
+            + joinWidth
         return inset + max(titleSide, clockSide)
     }
 

@@ -314,8 +314,8 @@ enum NotchCalendarSupport {
             .filter { $0 > now }.min()
     }
 
-    static let stripDotWidth: CGFloat = 6
-    static let stripTitleSpacing: CGFloat = 5
+    static let stripDotWidth: CGFloat = 3
+    static let stripTitleSpacing: CGFloat = 7
     static let stripClockSpacing: CGFloat = 4
 
     /// Reserve one clock shape for the selected lead, including restored

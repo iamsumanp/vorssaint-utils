@@ -99,18 +99,8 @@ struct NotchCalendarStrip: View {
             .frame(width: geometry.compactActivityWingWidth, alignment: .trailing)
             .clipped()
             Color.clear.frame(width: geometry.compactActivityCameraGap)
-            // The start or end time fills the side the clock alone left
-            // mostly empty; a wing narrowed by the menus keeps just the clock.
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: NotchCalendarSupport.stripClockSpacing) {
-                    Self.clock(remaining, ongoing: countdown.ongoing)
-                    Text(NotchCalendarSupport.timeText(countdown, locale: l10n.language.formattingLocale()))
-                        .font(.system(size: 11, weight: .medium)).monospacedDigit()
-                        .foregroundStyle(.white.opacity(0.55))
-                        .fixedSize()
-                }
-                Self.clock(remaining, ongoing: countdown.ongoing)
-            }
+            // As in Peaky: the time left alone, no start time beside it.
+            Self.clock(remaining, ongoing: countdown.ongoing)
             .padding(.trailing, inset)
             .frame(width: geometry.compactActivityWingWidth, alignment: .leading)
         }
@@ -237,10 +227,11 @@ struct NotchCalendarStrip: View {
         }
     }
 
+    /// The calendar's colour as a short upright bar, as Peaky marks a meeting.
     private static func dot(_ event: NotchCalendarEvent) -> some View {
-        Circle().fill(event.color.color).frame(width: NotchCalendarSupport.stripDotWidth,
-                                               height: NotchCalendarSupport.stripDotWidth)
-            .overlay { Circle().strokeBorder(.white.opacity(0.5), lineWidth: 0.5) }
+        RoundedRectangle(cornerRadius: NotchCalendarSupport.stripDotWidth / 2, style: .continuous)
+            .fill(event.color.color)
+            .frame(width: NotchCalendarSupport.stripDotWidth, height: 12)
             .accessibilityHidden(true)
     }
 
