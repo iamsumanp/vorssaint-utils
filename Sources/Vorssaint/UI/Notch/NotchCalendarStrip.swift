@@ -34,6 +34,10 @@ struct NotchCalendarStrip: View {
                     if let companion = service.compactCompanion, geometry.compactActivityWingWidth > 0 {
                         paired(countdown, companion: companion, title: displayTitle, remaining: remaining,
                                now: context.date)
+                    } else if NotchMeetingSupport.canJoin(countdown.event, at: context.date) {
+                        joinRow(countdown, title: displayTitle, remaining: remaining, now: context.date)
+                            .frame(width: geometry.compactActivitySize.width - geometry.compactActivityHorizontalPadding * 2,
+                                   height: geometry.compactActivityContentHeight)
                     } else {
                         Button { service.openCountdownEvent() } label: {
                             Group {
@@ -112,6 +116,67 @@ struct NotchCalendarStrip: View {
         }
     }
 
+    /// A call that can be joined now: the title still opens the event, and the
+    /// clock's side becomes the Join button.
+    @ViewBuilder private func joinRow(_ countdown: NotchCalendarCountdown, title: String,
+                                      remaining: String, now: Date) -> some View {
+        let joinTitle = NotchMeetingSupport.joinTitle(l10n.language)
+        let help = NotchMeetingSupport.joinHelp(countdown.event, language: l10n.language)
+        if usesFullRow {
+            HStack(spacing: 6) {
+                Button { service.openCountdownEvent() } label: {
+                    HStack(spacing: 6) {
+                        Self.dot(countdown.event)
+                        Text(title)
+                            .font(.system(size: 11, weight: .semibold))
+                            .lineLimit(1).truncationMode(.tail)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        Self.clock(remaining, ongoing: countdown.ongoing)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .modifier(countdownAccessibility(countdown, title: title, now: now))
+                Button { service.joinCountdownMeeting() } label: { NotchJoinPill(title: joinTitle, fontSize: 10) }
+                    .help(help).accessibilityLabel(help)
+            }
+            .padding(.horizontal, rowInset)
+        } else {
+            let inset = geometry.compactActivityEdgeInset(boxHeight: 9, radius: 0)
+            HStack(spacing: 0) {
+                Button { service.openCountdownEvent() } label: {
+                    HStack(spacing: NotchCalendarSupport.stripTitleSpacing) {
+                        Self.dot(countdown.event)
+                        Text(title)
+                            .font(.system(size: 11, weight: .semibold))
+                            .lineLimit(1).truncationMode(.tail)
+                    }
+                    .padding(.leading, inset)
+                    .frame(width: geometry.compactActivityWingWidth, alignment: .trailing)
+                    .clipped()
+                    .frame(height: geometry.compactActivityContentHeight)
+                    .contentShape(Rectangle())
+                }
+                .modifier(countdownAccessibility(countdown, title: title, now: now))
+                Color.clear.frame(width: geometry.compactActivityCameraGap)
+                Button { service.joinCountdownMeeting() } label: {
+                    // The clock gives way first when the wing is short.
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: NotchCalendarSupport.stripClockSpacing) {
+                            Self.clock(remaining, ongoing: countdown.ongoing)
+                            NotchJoinPill(title: joinTitle, fontSize: 10)
+                        }
+                        NotchJoinPill(title: joinTitle, fontSize: 10)
+                    }
+                    .padding(.trailing, inset)
+                    .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
+                           alignment: .leading)
+                    .contentShape(Rectangle())
+                }
+                .help(help).accessibilityLabel(help)
+            }
+        }
+    }
+
     /// Both sides sit at the ends, as a timer's pair does, and each opens
     /// its own page. Below a crowded notch the row splits the same way.
     private func paired(_ countdown: NotchCalendarCountdown, companion: NotchCompactActivity, title: String,
@@ -133,8 +198,23 @@ struct NotchCalendarStrip: View {
             .accessibilityLabel(NotchCompanionMark.label(companion, language: l10n.language))
             .accessibilityHint(FeatureStrings.notch(l10n.language).open)
             Color.clear.frame(width: geometry.compactActivityCameraGap)
-            Button { service.openCountdownEvent() } label: {
-                Self.clockMark(countdown, remaining: remaining)
+            let joinable = NotchMeetingSupport.canJoin(countdown.event, at: now)
+            Button {
+                if !(joinable && service.joinCountdownMeeting()) { service.openCountdownEvent() }
+            } label: {
+                Group {
+                    if joinable {
+                        ViewThatFits(in: .horizontal) {
+                            HStack(spacing: NotchCalendarSupport.stripClockSpacing) {
+                                Self.clockMark(countdown, remaining: remaining)
+                                NotchJoinPill(title: NotchMeetingSupport.joinTitle(l10n.language), fontSize: 10)
+                            }
+                            NotchJoinPill(title: NotchMeetingSupport.joinTitle(l10n.language), fontSize: 10)
+                        }
+                    } else {
+                        Self.clockMark(countdown, remaining: remaining)
+                    }
+                }
                     .padding(.trailing, footer ? rowInset : geometry.compactActivityEdgeInset(boxHeight: 9, radius: 0))
                     .frame(width: geometry.compactActivityWingWidth, height: geometry.compactActivityContentHeight,
                            alignment: .trailing)

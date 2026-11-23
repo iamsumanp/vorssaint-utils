@@ -1830,11 +1830,15 @@ enum NotchSupport {
     /// Keep Awake comes last: a session can run all day, even more than
     /// music plays, and it only says that the Mac stays awake. A watch
     /// follows the timer: the person started both and is waiting on them.
+    /// A call that can be joined now (`meetingFirst`) goes ahead of downloads,
+    /// agents and music, which then share the island beside it.
     static func compactActivities(timer: Bool, watch: Bool = false, downloads: Bool, agents: Bool,
-                                  calendar: Bool, music: Bool, keepAwake: Bool = false) -> [NotchCompactActivity] {
+                                  calendar: Bool, music: Bool, keepAwake: Bool = false,
+                                  meetingFirst: Bool = false) -> [NotchCompactActivity] {
+        let early = meetingFirst && calendar
         let candidates: [(Bool, NotchCompactActivity)] = [
-            (timer, .timer), (watch, .watch), (downloads, .downloads), (agents, .agents),
-            (calendar, .calendar), (music, .music), (keepAwake, .keepAwake)
+            (timer, .timer), (watch, .watch), (early, .calendar), (downloads, .downloads), (agents, .agents),
+            (calendar && !early, .calendar), (music, .music), (keepAwake, .keepAwake)
         ]
         return candidates.compactMap { $0.0 ? $0.1 : nil }
     }

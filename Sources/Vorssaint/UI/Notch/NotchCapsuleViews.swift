@@ -603,14 +603,24 @@ struct NotchCapsuleCalendarStrip: View {
                             Self.dot(countdown.event)
                             Text(title).capsuleTitle().truncationMode(.tail)
                             // The time left keeps its place; the start or end time
-                            // beside it gives way first when the bar is short.
+                            // beside it gives way first when the bar is short. A call
+                            // that can be joined shows Join there instead, and a click
+                            // on the capsule joins it.
                             ViewThatFits(in: .horizontal) {
-                                HStack(spacing: CapsuleLayout.markSpacing) {
-                                    Self.clock(remaining, ongoing: countdown.ongoing)
-                                    Text(NotchCalendarSupport.timeText(countdown, locale: l10n.language.formattingLocale()))
-                                        .font(Font(CapsuleLayout.smallFont as CTFont))
-                                        .foregroundStyle(.white.opacity(0.55))
-                                        .lineLimit(1).fixedSize()
+                                if NotchMeetingSupport.canJoin(countdown.event, at: context.date) {
+                                    HStack(spacing: CapsuleLayout.markSpacing) {
+                                        Self.clock(remaining, ongoing: countdown.ongoing)
+                                        NotchJoinPill(title: NotchMeetingSupport.joinTitle(l10n.language), fontSize: 10)
+                                    }
+                                    NotchJoinPill(title: NotchMeetingSupport.joinTitle(l10n.language), fontSize: 10)
+                                } else {
+                                    HStack(spacing: CapsuleLayout.markSpacing) {
+                                        Self.clock(remaining, ongoing: countdown.ongoing)
+                                        Text(NotchCalendarSupport.timeText(countdown, locale: l10n.language.formattingLocale()))
+                                            .font(Font(CapsuleLayout.smallFont as CTFont))
+                                            .foregroundStyle(.white.opacity(0.55))
+                                            .lineLimit(1).fixedSize()
+                                    }
                                 }
                                 Self.clock(remaining, ongoing: countdown.ongoing)
                             }

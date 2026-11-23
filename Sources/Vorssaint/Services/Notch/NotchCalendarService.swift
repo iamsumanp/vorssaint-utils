@@ -28,7 +28,9 @@ private actor NotchCalendarReader {
                                       start: start, end: end, allDay: event.isAllDay,
                                       location: event.location ?? "", color: Self.tint(event.calendar),
                                       calendarItemIdentifier: event.calendarItemIdentifier,
-                                      recurring: recurring, countdownKey: countdownKey)
+                                      recurring: recurring, countdownKey: countdownKey,
+                                      meetingURL: NotchMeetingSupport.link(
+                                          in: [event.url?.absoluteString, event.location, event.notes]))
         }
     }
 
@@ -166,8 +168,10 @@ final class NotchCalendarService: NSObject, ObservableObject {
         loading = events.isEmpty
         task = Task { @MainActor [weak self] in
             let result = await reader.read(interval: interval, excluded: excluded)
+                + NotchMeetingSupport.testMeetings(in: interval)
             let currentResult = needsCurrentRead
-                ? await reader.read(interval: currentInterval, excluded: excluded) : result
+                ? await reader.read(interval: currentInterval, excluded: excluded)
+                    + NotchMeetingSupport.testMeetings(in: currentInterval) : result
             guard !Task.isCancelled, let self, self.generation == requested,
                   NotchCalendarSupport.isEnabled() else { return }
             let now = Date()

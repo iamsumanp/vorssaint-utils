@@ -388,6 +388,23 @@ private struct NotchCalendarEventRow: View {
             .help(text.openCalendar)
             .accessibilityHint(text.openCalendar)
             .modifier(NotchCountdownChoice(chosen: countdown, text: text, choose: choose))
+            .overlay(alignment: .topTrailing) { joinButton }
+    }
+
+    /// A call link joins from the card until the event ends; green once it can
+    /// be joined from the closed island too.
+    @ViewBuilder private var joinButton: some View {
+        if event.meetingURL != nil, !ended, !event.allDay {
+            let language = L10n.shared.language
+            let help = NotchMeetingSupport.joinHelp(event, language: language)
+            Button { NotchMeetingSupport.join(event) } label: {
+                NotchJoinPill(title: NotchMeetingSupport.joinTitle(language), fontSize: 11,
+                              muted: !NotchMeetingSupport.canJoin(event, at: now))
+            }
+            .buttonStyle(.plain)
+            .help(help).accessibilityLabel(help)
+            .padding(10)
+        }
     }
 
     private var card: some View {
@@ -432,6 +449,8 @@ private struct NotchCalendarEventRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        // Room for the Join button in the card's corner.
+        .padding(.trailing, event.meetingURL != nil && !ended && !event.allDay ? 70 : 0)
         .padding(.leading, 12)
         .overlay(alignment: .leading) {
             RoundedRectangle(cornerRadius: 2).fill(event.color.color)

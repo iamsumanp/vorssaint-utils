@@ -576,7 +576,33 @@ final class NotchService: ObservableObject {
     var compactActivities: [NotchCompactActivity] {
         NotchSupport.compactActivities(timer: hasTimerActivity, watch: hasWatchActivity, downloads: hasDownloadActivity,
                                       agents: hasAgentActivity, calendar: hasCalendarActivity,
-                                      music: hasMusicActivity, keepAwake: hasKeepAwakeActivity)
+                                      music: hasMusicActivity, keepAwake: hasKeepAwakeActivity,
+                                      meetingFirst: hasJoinableMeeting)
+    }
+
+    /// The counted-down event is a call that can be joined now.
+    var hasJoinableMeeting: Bool {
+        guard let countdown = NotchCalendarService.shared.countdown else { return false }
+        return NotchMeetingSupport.canJoin(countdown.event, at: Date())
+    }
+
+    /// The countdown itself does not change as its call becomes joinable, so
+    /// the island looks again then, to put the call first and show Join.
+    private var joinWindowTimer: Timer?
+    private func scheduleJoinWindowRefresh() {
+        joinWindowTimer?.invalidate(); joinWindowTimer = nil
+        guard let event = NotchCalendarService.shared.countdown?.event, event.meetingURL != nil else { return }
+        let opens = event.start.addingTimeInterval(-NotchMeetingSupport.joinLeadTime)
+        guard opens > Date() else { return }
+        let timer = Timer(fire: opens.addingTimeInterval(0.5), interval: 0, repeats: false) { [weak self] _ in
+            MainActor.assumeIsolated {
+                self?.objectWillChange.send()
+                self?.refreshPresentation()
+            }
+        }
+        timer.tolerance = 1
+        RunLoop.main.add(timer, forMode: .common)
+        joinWindowTimer = timer
     }
 
     var showsCompactActivityPicker: Bool {
@@ -736,8 +762,10 @@ final class NotchService: ObservableObject {
         // Measured at the narrowest wing the strip may take.
         let provisional = geometry.compactCalendarGeometry(wing: 0, paired: companion != nil)
         let inset = provisional.compactActivityEdgeInset(boxHeight: 9, radius: 0)
+        let joinWidth = NotchMeetingSupport.canJoin(countdown.event, at: Date())
+            ? NotchMeetingSupport.joinPillWidth(L10n.shared.language) + NotchCalendarSupport.stripClockSpacing : 0
         if let companion {
-            let sides = max(inset + calendarClockWidth, companionMarkWidth(companion, in: provisional))
+            let sides = max(inset + calendarClockWidth + joinWidth, companionMarkWidth(companion, in: provisional))
                 + NotchTimerSupport.stripCameraGap
             // A download keeps room for its percentage, as beside a timer.
             return companion == .downloads ? max(80, sides) : sides
@@ -754,8 +782,8 @@ final class NotchService: ObservableObject {
         // while the minutes count down.
         let clockSide = width(calendarClockShape, .monospacedDigitSystemFont(ofSize: 13, weight: .medium))
             + NotchCalendarSupport.stripClockSpacing
-            + width(NotchCalendarSupport.timeText(countdown, locale: language.formattingLocale()),
-                    .monospacedDigitSystemFont(ofSize: 11, weight: .medium))
+            + max(joinWidth, width(NotchCalendarSupport.timeText(countdown, locale: language.formattingLocale()),
+                                   .monospacedDigitSystemFont(ofSize: 11, weight: .medium)))
         return inset + max(titleSide, clockSide)
     }
 
@@ -1438,6 +1466,14 @@ final class NotchService: ObservableObject {
     }
 
     /// Opens the Calendar page scrolled to the countdown's event.
+    /// Joins the counted-down meeting's call when it can be joined now. False otherwise.
+    @discardableResult
+    func joinCountdownMeeting() -> Bool {
+        guard let event = NotchCalendarService.shared.countdown?.event,
+              NotchMeetingSupport.canJoin(event, at: Date()) else { return false }
+        return NotchMeetingSupport.join(event)
+    }
+
     func openCountdownEvent() {
         let calendar = NotchCalendarService.shared
         calendar.revealing = calendar.countdown?.event.id
@@ -2802,6 +2838,8 @@ final class NotchService: ObservableObject {
                 // The capsule's button covers its music bars too, which play or pause there.
                 else if self.geometry.floats, self.musicStripShowsControl { self.toggleMusicStripSong() }
                 else if !self.expanded, self.compactActivity == .calendar {
+                    // A capsule showing Join joins the call; otherwise it opens the event.
+                    if self.geometry.floats, self.joinCountdownMeeting() { return }
                     self.openCountdownEvent()
                 } else { self.toggle() }
             })
@@ -4307,6 +4345,7 @@ final class NotchService: ObservableObject {
                 .receive(on: DispatchQueue.main)
                 .sink { [weak self] _ in
                     self?.syncMascotCalendar()
+                    self?.scheduleJoinWindowRefresh()
                     self?.syncMenuSpaceMonitoring()
                     self?.objectWillChange.send()
                     self?.refreshPresentation()
