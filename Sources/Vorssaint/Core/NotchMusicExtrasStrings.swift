@@ -45,6 +45,8 @@ struct NotchMusicExtrasStrings {
     let liveEqualizerUnavailable: String
     let shuffle: String
     let showVolume: String
+    /// Only English is translated.
+    var titleWithoutCamera = "Song title on displays without a camera"
     let preferredPlayer: String
     let preferredPlayerHint: String
     /// "Open Spotify", with the app's name in place of %@.

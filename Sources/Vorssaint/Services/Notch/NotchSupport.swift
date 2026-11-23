@@ -810,7 +810,13 @@ enum NotchMusicStripLayout {
 
     /// A simulated camera has room for the track even when its wings disappear.
     static func fillsCameraGap(_ geometry: NotchGeometry) -> Bool {
-        !geometry.isNotched && geometry.compactActivityCameraGap >= 56
+        !geometry.isNotched && geometry.compactActivityCameraGap >= 56 && titleWithoutCamera
+    }
+
+    /// Off in Settings, a display without a camera keeps the gap black, as
+    /// the camera's own display does.
+    private static var titleWithoutCamera: Bool {
+        UserDefaults.standard.object(forKey: DefaultsKey.notchMusicTitleWithoutCamera) as? Bool ?? true
     }
 
     static func showsArtist(_ geometry: NotchGeometry) -> Bool { geometry.compactActivityContentHeight >= 28 }
