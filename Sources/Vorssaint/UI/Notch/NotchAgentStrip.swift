@@ -231,3 +231,50 @@ struct NotchMusicAgentsRow: View {
                                        focus: NotchAgentLimitFocus(rawValue: focus) ?? .mostUsed, now: now)
     }
 }
+
+/// The meeting about to start, below the music player as Peaky lists it: the
+/// calendar's bar, the title, the minutes left and Join once the call opens.
+/// The row opens the event; Join joins the call.
+struct NotchMusicMeetingRow: View {
+    @ObservedObject private var calendar = NotchCalendarService.shared
+    @ObservedObject private var l10n = L10n.shared
+
+    var body: some View {
+        if let countdown = calendar.countdown {
+            let event = countdown.event
+            let title = NotchCalendarStrip.displayTitle(event, untitled: FeatureStrings.notchCalendar(l10n.language).untitled)
+            TimelineView(.periodic(from: .now, by: 15)) { context in
+                HStack(spacing: 8) {
+                    Button { NotchService.shared.openCountdownEvent() } label: {
+                        HStack(spacing: 8) {
+                            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                                .fill(event.color.color)
+                                .frame(width: 3, height: 13)
+                            Text(title)
+                                .font(.system(size: 12, weight: .semibold))
+                                .lineLimit(1).truncationMode(.tail)
+                            Spacer(minLength: 6)
+                            Text(NotchCalendarSupport.countdownText(until: countdown.target, now: context.date))
+                                .font(.system(size: 12, weight: .medium)).monospacedDigit()
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    if NotchMeetingSupport.canJoin(event, at: context.date) {
+                        Button { _ = NotchService.shared.joinCountdownMeeting() } label: {
+                            NotchJoinPill(title: NotchMeetingSupport.joinTitle(l10n.language), fontSize: 11)
+                        }
+                        .buttonStyle(.plain)
+                        .help(NotchMeetingSupport.joinHelp(event, language: l10n.language))
+                    }
+                }
+                .padding(.horizontal, 10)
+                .frame(maxWidth: .infinity, minHeight: NotchLayout.musicAgentsRowHeight,
+                       maxHeight: NotchLayout.musicAgentsRowHeight)
+                .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+            }
+        }
+    }
+}

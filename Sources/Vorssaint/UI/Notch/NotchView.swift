@@ -491,7 +491,7 @@ struct NotchView: View {
             size.height = max(size.height, NotchLayout.musicPlayerHeight(band: service.expandedGeometry.musicBandHeight,
                                                                          playing: music.playback != nil,
                                                                          showVolume: service.musicShowsVolume,
-                                                                         showAgents: service.musicShowsAgents))
+                                                                         showAgents: service.musicShowsAgents, showMeeting: service.musicShowsMeeting))
         case .files:
             // One shelf tile and its vertical insets; the actions are in the top row.
             size.height = max(size.height, 88 + 8)

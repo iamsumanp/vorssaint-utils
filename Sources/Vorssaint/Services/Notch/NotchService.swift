@@ -608,7 +608,7 @@ final class NotchService: ObservableObject {
     var showsCompactActivityPicker: Bool {
         (inside || activityPickerMenuOpen) && !hiddenInFullscreen && !hiddenUntilHover && !expanded && !peeking
             && !dragPlaceholder && notice == nil && captureControls == nil
-            && compactActivities.count > 1
+            && compactActivities.count > 1 && NotchClosedHover.reacts()
     }
 
     var compactActivityPickerLayout: NotchActivityPickerLayout {
@@ -922,7 +922,7 @@ final class NotchService: ObservableObject {
         return geometry.expandedSize(module: module, detail: detail, panel: panel, detailHeight: detailHeight,
                                      shortcutCount: shortcuts,
                                      sliderCount: sliders, controlsHaveMusic: controls.contains(.music), musicHasContent: NotchMusicService.shared.playback != nil,
-                                     musicShowsVolume: musicShowsVolume, musicShowsAgents: musicShowsAgents,
+                                     musicShowsVolume: musicShowsVolume, musicShowsAgents: musicShowsAgents, musicShowsMeeting: musicShowsMeeting,
                                      musicExtraHeight: musicExtraHeight, fileMediaHeight: fileMediaHeight,
                                      systemCards: NotchSupport.systemCardCount(hasBattery: PowerSampler.hasInternalBattery,
                                                                                fans: SystemMonitor.shared.snapshot.fanSpeeds.count),
@@ -1467,11 +1467,18 @@ final class NotchService: ObservableObject {
     /// playing still leads the open one: the player, with the agents in a row
     /// below it that opens their page.
     func activityPage(for module: NotchModule) -> NotchModule {
-        guard module == .agents, musicShowsAgents else { return module }
-        return .music
+        if module == .agents, musicShowsAgents { return .music }
+        if module == .calendar, musicShowsMeeting { return .music }
+        return module
     }
 
     /// The music page lists the working agents below the player while a song plays.
+    /// A meeting about to start gets a row on the music page while a song plays.
+    var musicShowsMeeting: Bool {
+        modules.contains(.music) && hasCalendarActivity && hasMusicActivity
+            && NotchCalendarService.shared.countdown?.ongoing == false
+    }
+
     var musicShowsAgents: Bool {
         modules.contains(.music) && modules.contains(.agents) && hasAgentActivity && hasMusicActivity
     }
@@ -1651,7 +1658,7 @@ final class NotchService: ObservableObject {
         let opensOnHover = hoverOpeningEnabled
             && UserDefaults.standard.bool(forKey: DefaultsKey.notchHoverExpands) && !showsCompactActivityPicker
         let emphasize = inside && !hiddenInFullscreen && !hiddenUntilHover && !expanded && !peeking && !dragPlaceholder
-            && notice == nil && captureControls == nil && !opensOnHover
+            && notice == nil && captureControls == nil && !opensOnHover && NotchClosedHover.reacts()
             && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
         if hoverEmphasized != emphasize || showedPicker != showsCompactActivityPicker || unnamesMusic {
             hoverEmphasized = emphasize
@@ -3098,7 +3105,7 @@ final class NotchService: ObservableObject {
     /// that opening while several activities run, keeps the bars' button, but
     /// the strip at its top has no room to name the song.
     func musicStripAnswers(_ part: NotchMusicStripPart) -> Bool {
-        guard compactMusicIsVisible, !hiddenUntilHover else { return false }
+        guard compactMusicIsVisible, !hiddenUntilHover, NotchClosedHover.reacts() else { return false }
         if showsCompactActivityPicker { return part == .bars }
         guard UserDefaults.standard.bool(forKey: DefaultsKey.notchOpenOnHover) else { return true }
         // A preview opens over a strip without wings, as a capsule's is where

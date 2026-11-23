@@ -692,11 +692,12 @@ enum NotchLayout {
     /// The whole player, the same in every preset; with nothing playing it
     /// has no timeline. The optional volume row keeps its full control height.
     static func musicPlayerHeight(band: CGFloat, playing: Bool = true, showVolume: Bool = false,
-                                  showAgents: Bool = false) -> CGFloat {
+                                  showAgents: Bool = false, showMeeting: Bool = false) -> CGFloat {
         musicHeadHeight(band: band) + musicHeadSpacing
             + (playing ? musicTimelineHeight + rowSpacing : 0) + musicTransportHeight + musicBottomRoom
             + (showVolume ? rowSpacing + levelRowHeight : 0)
             + (showAgents ? rowSpacing + musicAgentsRowHeight : 0)
+            + (showMeeting ? rowSpacing + musicAgentsRowHeight : 0)
     }
     /// The working agents' row below the player.
     static let musicAgentsRowHeight: CGFloat = 30
@@ -760,6 +761,14 @@ struct NotchHoverState {
     mutating func open() { suppressed = false }
     mutating func update(pointerInside: Bool) {
         if !pointerInside { suppressed = false }
+    }
+}
+
+/// Fork: the closed island can ignore the pointer altogether: no growing,
+/// no pause button on the bars, no song named from the cover.
+enum NotchClosedHover {
+    static func reacts(in defaults: UserDefaults = .standard) -> Bool {
+        defaults.object(forKey: DefaultsKey.notchClosedHoverReacts) as? Bool ?? true
     }
 }
 
@@ -2784,7 +2793,7 @@ struct NotchGeometry: Equatable {
     func expandedSize(module: NotchModule, detail: Bool = false, panel: Bool = false,
                       detailHeight: CGFloat? = nil, shortcutCount: Int = 4,
                       sliderCount: Int = 2, controlsHaveMusic: Bool = true, musicHasContent: Bool = true,
-                      musicShowsVolume: Bool = false, musicShowsAgents: Bool = false,
+                      musicShowsVolume: Bool = false, musicShowsAgents: Bool = false, musicShowsMeeting: Bool = false,
                       musicExtraHeight: CGFloat = 0,
                       fileMediaHeight: CGFloat? = nil, systemCards: Int = 6, toolCount: Int? = 8,
                       capturePreviewHeight: CGFloat? = nil,
@@ -2826,6 +2835,7 @@ struct NotchGeometry: Equatable {
                 // its limit and the page can scroll to the controls.
                 let volume = (musicShowsVolume ? NotchLayout.rowSpacing + NotchLayout.levelRowHeight : 0)
                     + (musicShowsAgents ? NotchLayout.rowSpacing + NotchLayout.musicAgentsRowHeight : 0)
+                    + (musicShowsMeeting ? NotchLayout.rowSpacing + NotchLayout.musicAgentsRowHeight : 0)
                 let room = budget + (layout == .custom ? 0 : volume)
                 contentHeight = min(room, player + volume) + max(0, musicExtraHeight)
             case .system:

@@ -47,6 +47,8 @@ struct NotchStrings {
     var overFullscreen = "Over full screen"
     var eachDisplayHint = "Show applies while the island follows the pointer or shows on all displays. Over full screen keeps it on that display while a full-screen app is open."
     var builtInTag = "Built-in"
+    var closedHoverReacts = "React to the pointer while closed"
+    var closedHoverReactsHint = "The closed island grows a little under the pointer, its bars become a pause button, its cover names the song, and with several activities a picker between them appears."
     let hoverInFullscreen: String
     let showInCaptures: String
     let clipboardWindow: String

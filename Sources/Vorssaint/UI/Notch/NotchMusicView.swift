@@ -28,6 +28,7 @@ struct NotchMusicView: View {
     private var showsVolume: Bool { showVolume && AppFeature.mixer.isAvailable }
     /// Working agents get a row below the player, read when the page is laid out.
     private var showsAgents: Bool { !preview && NotchService.shared.musicShowsAgents }
+    private var showsMeeting: Bool { !preview && NotchService.shared.musicShowsMeeting }
     private var openExtra: MusicExtra? {
         guard service.playback != nil else { return nil }
         switch extra {
@@ -49,7 +50,7 @@ struct NotchMusicView: View {
         let split = NotchLayout.musicSplit(
             height: size.height, extras: extrasHeight,
             resting: NotchLayout.musicPlayerHeight(band: bandHeight, playing: service.playback != nil, showVolume: showsVolume,
-                                              showAgents: showsAgents),
+                                              showAgents: showsAgents, showMeeting: showsMeeting),
             keepsPlayer: !preview && geometry.layout != .custom, extraOpen: openExtra != nil)
         // With the player gone the list starts below the camera's row, which
         // keeps its toggles; without that row they come back in one of their
@@ -212,6 +213,10 @@ struct NotchMusicView: View {
     @ViewBuilder private var volumeRow: some View {
         if showsVolume {
             NotchAudioControls()
+                .padding(.top, NotchLayout.rowSpacing)
+        }
+        if showsMeeting {
+            NotchMusicMeetingRow()
                 .padding(.top, NotchLayout.rowSpacing)
         }
         if showsAgents {

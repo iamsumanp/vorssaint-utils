@@ -1729,7 +1729,7 @@ def main():
               .replace("private var", "var", 1).replace("NotchSupport.controls()", "controls")
               .replace("NotchTimerService.shared", "NotchCompactTests.NotchTimerService.shared")
               .replace("NotchTimerSupport.savedMode()", "timerMode")
-              .replace(",\n                                                                         showAgents: service.musicShowsAgents", "")
+              .replace(",\n                                                                         showAgents: service.musicShowsAgents, showMeeting: service.musicShowsMeeting", "")
           + declaration("Sources/Vorssaint/UI/Notch/NotchView.swift", "    private var headerFeedback:")
               .replace("private var", "var", 1).replace("NotchSupport.controls()", "controls")
               .replace("BrightnessService.shared.islandSliderShowsFocusedDisplay", "brightnessSlider")

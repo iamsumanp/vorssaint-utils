@@ -106,6 +106,7 @@ struct NotchSettings: View {
     @AppStorage(DefaultsKey.brightnessControlEnabled) private var brightnessControlEnabled = false
     @AppStorage(DefaultsKey.clipboardHistoryEnabled) private var clipboardHistoryEnabled = false
     @AppStorage(DefaultsKey.notchHoverExpands) private var hoverExpand = true
+    @AppStorage(DefaultsKey.notchClosedHoverReacts) private var closedHoverReacts = true
     @AppStorage(DefaultsKey.notchQuickAccessLayout) private var accessData = Data()
     @State private var tab = NotchSettingsTab.layout
     @State private var selectedModule = NotchModule.controls
@@ -679,6 +680,8 @@ struct NotchSettings: View {
                     switchRow("sparkles", editor.hiddenShowsActivity,
                               caption: hiddenShowsActivity ? editor.hiddenShowsActivityHint : nil, isOn: $hiddenShowsActivity)
                 }
+                switchRow("cursorarrow.motionlines", text.closedHoverReacts,
+                          caption: closedHoverReacts ? text.closedHoverReactsHint : nil, isOn: $closedHoverReacts)
                 if hover || (hideInFullscreen && hoverInFullscreen) {
                     hoverDelayControl
                     if hoverExpand { closeDelayControl }
