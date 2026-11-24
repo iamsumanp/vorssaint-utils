@@ -16,6 +16,9 @@ final class NotchAgentAnimationView: NSView {
     private var isPulse = false
     private var size: CGFloat = 0
     private var animates = false
+    /// Turn instead of breathe: one even turn every `spinPeriod` seconds.
+    private var spins = false
+    static let spinPeriod: CFTimeInterval = 6
     private var visibilityObserver: NSObjectProtocol?
     private(set) var motionStart: CFTimeInterval = 0
     private lazy var clock = NotchDecorativeClock { [weak self] time in self?.step(at: time) }
@@ -39,9 +42,10 @@ final class NotchAgentAnimationView: NSView {
 
     override func hitTest(_ point: NSPoint) -> NSView? { nil }
 
-    func configureGlyph(image: NSImage?, size: CGFloat, tint: NSColor?, animates: Bool) {
+    func configureGlyph(image: NSImage?, size: CGFloat, tint: NSColor?, animates: Bool, spins: Bool = false) {
         let changed = self.image !== image || self.size != size || self.tint != tint || isPulse
         isPulse = false
+        self.spins = spins
         self.image = image
         self.tint = tint
         self.size = size
@@ -157,6 +161,13 @@ final class NotchAgentAnimationView: NSView {
         if let time, isPulse {
             let spread = NotchDecorativeClock.pulse(time - motionStart, period: 1.6)
             spreading = (1 + 0.9 * spread, 0.6 * (1 - spread))
+        } else if let time, spins {
+            // Clockwise, as the layer's positive angle turns the other way.
+            let turn = ((time - motionStart) / Self.spinPeriod).truncatingRemainder(dividingBy: 1)
+            artwork.transform = CATransform3DMakeRotation(-2 * .pi * turn, 0, 0, 1)
+            artwork.opacity = 1
+            ring.opacity = 0
+            return
         } else if let time {
             let breath = NotchDecorativeClock.swing((time - motionStart) / 1.2)
             glyph = (0.84 + 0.16 * breath, 0.7 + 0.3 * breath)

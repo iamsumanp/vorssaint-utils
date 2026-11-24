@@ -90,6 +90,26 @@ enum NotchAgentAnimationTests {
             expect(!view.isMoving, "dismantled agent artwork stays stopped")
             view.removeFromSuperview()
         }
+        do {
+            // The spinning mark turns on its own layer, at an even speed, clockwise.
+            let view = NotchAgentAnimationView(frame: CGRect(x: 0, y: 0, width: 20, height: 20))
+            view.configureGlyph(image: image, size: 13, tint: .white, animates: true, spins: true)
+            container.addSubview(view)
+            expect(view.isMoving, "a spinning agent mark moves while shown")
+            let art = view.layer?.sublayers?[0]
+            func angle() -> CGFloat { atan2(art?.transform.m12 ?? 0, art?.transform.m11 ?? 1) }
+            let started = view.motionStart
+            let period = NotchAgentAnimationView.spinPeriod
+            view.step(at: started + period / 4)
+            expect(abs(angle() + .pi / 2) < 0.001, "the mark makes a quarter turn clockwise in a quarter period")
+            expect(abs((art?.opacity ?? 0) - 1) < 0.001, "a spinning mark keeps full opacity")
+            view.step(at: started + period * 1.25)
+            expect(abs(angle() + .pi / 2) < 0.001, "the turn keeps its even speed across periods")
+            expect(view.frame.size == CGSize(width: 20, height: 20), "turning the mark leaves the view's frame alone")
+            view.configureGlyph(image: image, size: 13, tint: .white, animates: false, spins: true)
+            expect(!view.isMoving && abs(angle()) < 0.001, "Reduce Motion leaves the mark upright and still")
+            view.removeFromSuperview()
+        }
         weak var released: NotchAgentAnimationView?
         autoreleasepool {
             let view = NotchAgentAnimationView(frame: .zero)

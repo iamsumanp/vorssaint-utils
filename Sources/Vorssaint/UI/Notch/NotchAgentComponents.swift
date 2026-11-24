@@ -170,18 +170,16 @@ struct NotchAgentGlyph: View {
 }
 
 /// The still logo turning once every six seconds at an even speed, as
-/// Claude's own spark does while it thinks.
+/// Claude's own spark does while it thinks. The turn runs on the mark's own
+/// layer: a SwiftUI rotation of the hosted view re-laid it out on every
+/// frame, and AppKit's layout engine eventually aborted the app on it.
 private struct NotchAgentSpinningMark: View {
     let provider: AgentProvider
     let size: CGFloat
     let spins: Bool
-    @State private var turned = false
 
     var body: some View {
-        NotchAgentGlyphBridge(provider: provider, size: size, animates: false)
-            .rotationEffect(.degrees(turned ? 360 : 0))
-            .animation(spins ? .linear(duration: 6).repeatForever(autoreverses: false) : nil, value: turned)
-            .onAppear { if spins { turned = true } }
+        NotchAgentGlyphBridge(provider: provider, size: size, animates: spins, spins: true)
     }
 }
 
@@ -201,6 +199,7 @@ private struct NotchAgentGlyphBridge: NSViewRepresentable {
     let provider: AgentProvider
     let size: CGFloat
     let animates: Bool
+    var spins = false
 
     func makeNSView(context: Context) -> NotchAgentAnimationView { NotchAgentAnimationView() }
     func updateNSView(_ view: NotchAgentAnimationView, context: Context) {
@@ -222,7 +221,7 @@ private struct NotchAgentGlyphBridge: NSViewRepresentable {
             markSize = size
             tint = NSColor(provider.tint)
         }
-        view.configureGlyph(image: image, size: markSize, tint: tint, animates: animates)
+        view.configureGlyph(image: image, size: markSize, tint: tint, animates: animates, spins: spins)
     }
     static func dismantleNSView(_ view: NotchAgentAnimationView, coordinator: ()) { view.stop() }
 }
