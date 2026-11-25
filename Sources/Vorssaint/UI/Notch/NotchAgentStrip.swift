@@ -298,13 +298,7 @@ struct NotchMusicMeetingRow: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    if NotchMeetingSupport.canJoin(event, at: context.date) {
-                        Button { _ = NotchService.shared.joinCountdownMeeting() } label: {
-                            NotchJoinPill(title: NotchMeetingSupport.joinTitle(l10n.language), fontSize: 11)
-                        }
-                        .buttonStyle(.plain)
-                        .help(NotchMeetingSupport.joinHelp(event, language: l10n.language))
-                    }
+                    // No Join here: the meeting's own page has it.
                 }
                 .padding(.horizontal, 10)
                 .frame(maxWidth: .infinity, minHeight: NotchLayout.musicAgentsRowHeight,
