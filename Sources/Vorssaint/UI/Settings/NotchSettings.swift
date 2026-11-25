@@ -107,6 +107,7 @@ struct NotchSettings: View {
     @AppStorage(DefaultsKey.clipboardHistoryEnabled) private var clipboardHistoryEnabled = false
     @AppStorage(DefaultsKey.notchHoverExpands) private var hoverExpand = true
     @AppStorage(DefaultsKey.notchClosedHoverReacts) private var closedHoverReacts = true
+    @AppStorage(DefaultsKey.notchClosedJoin) private var closedJoin = true
     @AppStorage(DefaultsKey.notchQuickAccessLayout) private var accessData = Data()
     @State private var tab = NotchSettingsTab.layout
     @State private var selectedModule = NotchModule.controls
@@ -682,6 +683,7 @@ struct NotchSettings: View {
                 }
                 switchRow("cursorarrow.motionlines", text.closedHoverReacts,
                           caption: closedHoverReacts ? text.closedHoverReactsHint : nil, isOn: $closedHoverReacts)
+                switchRow("video", text.closedJoin, caption: text.closedJoinHint, isOn: $closedJoin)
                 if hover || (hideInFullscreen && hoverInFullscreen) {
                     hoverDelayControl
                     if hoverExpand { closeDelayControl }

@@ -583,7 +583,7 @@ final class NotchService: ObservableObject {
     /// The counted-down event is a call that can be joined now.
     var hasJoinableMeeting: Bool {
         guard let countdown = NotchCalendarService.shared.countdown else { return false }
-        return NotchMeetingSupport.canJoin(countdown.event, at: Date())
+        return NotchMeetingSupport.showsClosedJoin(countdown.event, at: Date())
     }
 
     /// The countdown itself does not change as its call becomes joinable, so
@@ -762,7 +762,7 @@ final class NotchService: ObservableObject {
         // Measured at the narrowest wing the strip may take.
         let provisional = geometry.compactCalendarGeometry(wing: 0, paired: companion != nil)
         let inset = provisional.compactActivityEdgeInset(boxHeight: 9, radius: 0)
-        let joinWidth = NotchMeetingSupport.canJoin(countdown.event, at: Date())
+        let joinWidth = NotchMeetingSupport.showsClosedJoin(countdown.event, at: Date())
             ? NotchMeetingSupport.joinPillWidth(L10n.shared.language) + NotchCalendarSupport.stripClockSpacing : 0
         if let companion {
             let sides = max(inset + calendarClockWidth + joinWidth, companionMarkWidth(companion, in: provisional))

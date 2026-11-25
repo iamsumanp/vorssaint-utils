@@ -607,7 +607,7 @@ struct NotchCapsuleCalendarStrip: View {
                             // that can be joined shows Join there instead, and a click
                             // on the capsule joins it.
                             ViewThatFits(in: .horizontal) {
-                                if NotchMeetingSupport.canJoin(countdown.event, at: context.date) {
+                                if NotchMeetingSupport.showsClosedJoin(countdown.event, at: context.date) {
                                     HStack(spacing: CapsuleLayout.markSpacing) {
                                         Self.clock(remaining, ongoing: countdown.ongoing)
                                         NotchJoinPill(title: NotchMeetingSupport.joinTitle(l10n.language), fontSize: 10)

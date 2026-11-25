@@ -870,6 +870,7 @@ enum DefaultsKey {
     /// Whether a display without a camera names the song between the cover and the bars.
     static let notchMusicTitleWithoutCamera = "notchMusicTitleWithoutCamera"
     static let notchClosedHoverReacts = "notchClosedHoverReacts"
+    static let notchClosedJoin = "notchClosedJoin"
     static let notchPreferredPlayer = "notchPreferredPlayer"
     static let notchDefaultProfileInitialized = "notchDefaultProfileInitialized" // local migration marker; never backed up
     static let notchInitialExtensionsInstalled = "notchInitialExtensionsInstalled" // local first-install marker; never backed up
@@ -1511,6 +1512,7 @@ enum Defaults {
         DefaultsKey.notchMusicShowVolume: false,
         DefaultsKey.notchMusicTitleWithoutCamera: true,
         DefaultsKey.notchClosedHoverReacts: true,
+        DefaultsKey.notchClosedJoin: true,
         DefaultsKey.notchPreferredPlayer: "",
         DefaultsKey.notchIdleContent: NotchIdleContent.music.rawValue,
         DefaultsKey.notchHiddenControls: NotchControlItem.defaultHidden,

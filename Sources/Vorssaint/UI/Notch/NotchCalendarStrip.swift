@@ -34,7 +34,7 @@ struct NotchCalendarStrip: View {
                     if let companion = service.compactCompanion, geometry.compactActivityWingWidth > 0 {
                         paired(countdown, companion: companion, title: displayTitle, remaining: remaining,
                                now: context.date)
-                    } else if NotchMeetingSupport.canJoin(countdown.event, at: context.date) {
+                    } else if NotchMeetingSupport.showsClosedJoin(countdown.event, at: context.date) {
                         joinRow(countdown, title: displayTitle, remaining: remaining, now: context.date)
                             .frame(width: geometry.compactActivitySize.width - geometry.compactActivityHorizontalPadding * 2,
                                    height: geometry.compactActivityContentHeight)
@@ -188,7 +188,7 @@ struct NotchCalendarStrip: View {
             .accessibilityLabel(NotchCompanionMark.label(companion, language: l10n.language))
             .accessibilityHint(FeatureStrings.notch(l10n.language).open)
             Color.clear.frame(width: geometry.compactActivityCameraGap)
-            let joinable = NotchMeetingSupport.canJoin(countdown.event, at: now)
+            let joinable = NotchMeetingSupport.showsClosedJoin(countdown.event, at: now)
             Button {
                 if !(joinable && service.joinCountdownMeeting()) { service.openCountdownEvent() }
             } label: {

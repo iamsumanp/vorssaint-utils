@@ -55,6 +55,13 @@ enum NotchMeetingSupport {
         return now < event.end && event.start.timeIntervalSince(now) <= joinLeadTime
     }
 
+    /// Join on the closed island: a joinable call, unless the fork's switch
+    /// keeps the closed island to the time alone.
+    static func showsClosedJoin(_ event: NotchCalendarEvent, at now: Date,
+                                defaults: UserDefaults = .standard) -> Bool {
+        (defaults.object(forKey: DefaultsKey.notchClosedJoin) as? Bool ?? true) && canJoin(event, at: now)
+    }
+
     @discardableResult
     static func join(_ event: NotchCalendarEvent) -> Bool {
         guard let url = event.meetingURL else { return false }
