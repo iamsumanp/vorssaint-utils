@@ -99,10 +99,11 @@ struct NotchCalendarStrip: View {
             .frame(width: geometry.compactActivityWingWidth, alignment: .trailing)
             .clipped()
             Color.clear.frame(width: geometry.compactActivityCameraGap)
-            // As in Peaky: the time left alone, no start time beside it.
+            // As in Peaky: the time left alone, no start time beside it, at
+            // the island's far right edge.
             Self.clock(remaining, ongoing: countdown.ongoing)
             .padding(.trailing, inset)
-            .frame(width: geometry.compactActivityWingWidth, alignment: .leading)
+            .frame(width: geometry.compactActivityWingWidth, alignment: .trailing)
         }
     }
 
