@@ -293,6 +293,8 @@ struct NotchMusicMeetingRow: View {
                                 .foregroundStyle(.secondary)
                                 .lineLimit(1)
                         }
+                        // Fill the row, so the time sits at its right edge.
+                        .frame(maxWidth: .infinity)
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
