@@ -118,6 +118,7 @@ final class WindowLayoutService: ObservableObject {
 
     func syncWithPreferences() {
         WindowLayoutIgnoredApps.shared.reload()
+        _ = WindowSnapAssist.testLaunch
         let available = AppFeature.windowLayout.isAvailable
         let trusted = SessionActivitySupport.tapShouldRun(
             featureWanted: available,

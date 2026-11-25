@@ -45,6 +45,23 @@ final class WindowSnapAssist {
 
     var isShowing: Bool { panel != nil }
 
+    /// For checking the picker by eye without pressing a shortcut: launched
+    /// with `open -a Vorssaint --env VORSSAINT_TEST_SNAP_ASSIST=1`, it opens on
+    /// the right half of the main display a few seconds after launch, with no
+    /// window moved. Never set otherwise, so it adds nothing.
+    static let testLaunch: Void = {
+        guard ProcessInfo.processInfo.environment["VORSSAINT_TEST_SNAP_ASSIST"] != nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            guard let screen = NSScreen.main else { return }
+            let visible = screen.windowLayoutVisibleFrame
+            let rect = WindowLayoutGeometry.rect(for: .rightHalf, current: .zero, visibleFrame: visible,
+                                                 windowGap: WindowLayoutGaps.windowGap,
+                                                 screenGap: WindowLayoutGaps.screenGap).integral
+            shared.show(WindowSnapAssistRequest(action: .rightHalf, rect: rect, visibleFrame: visible,
+                                                snappedWindowID: 0, snappedPID: 0))
+        }
+    }()
+
     func show(_ request: WindowSnapAssistRequest) {
         dispatchPrecondition(condition: .onQueue(.main))
         close()
