@@ -1479,11 +1479,17 @@ final class NotchService: ObservableObject {
     }
 
     /// The music page lists the working agents below the player while a song plays.
-    /// A meeting about to start gets a row on the music page while a song plays.
-    var musicShowsMeeting: Bool {
-        modules.contains(.music) && hasCalendarActivity && hasMusicActivity
-            && NotchCalendarService.shared.countdown?.ongoing == false
+    /// The next meeting gets a row on the music page while a song plays: the
+    /// one counting down, else the next start this week, so a song never
+    /// hides what comes next.
+    var musicMeeting: NotchCalendarEvent? {
+        guard modules.contains(.music), hasMusicActivity, NotchCalendarSupport.isEnabled() else { return nil }
+        let calendar = NotchCalendarService.shared
+        if hasCalendarActivity, let countdown = calendar.countdown, !countdown.ongoing { return countdown.event }
+        return NotchCalendarSupport.tileEvent(calendar.events, now: Date())
     }
+
+    var musicShowsMeeting: Bool { musicMeeting != nil }
 
     var musicShowsAgents: Bool {
         modules.contains(.music) && modules.contains(.agents) && hasAgentActivity && hasMusicActivity
@@ -1496,6 +1502,15 @@ final class NotchService: ObservableObject {
         guard let event = NotchCalendarService.shared.countdown?.event,
               NotchMeetingSupport.canJoin(event, at: Date()) else { return false }
         return NotchMeetingSupport.join(event)
+    }
+
+    /// The player's meeting row opens Calendar itself on that event, not the
+    /// page the closed island's calendar would lead to (the player).
+    func openMeetingEvent(_ event: NotchCalendarEvent) {
+        let calendar = NotchCalendarService.shared
+        calendar.revealing = event.id
+        open(.calendar)
+        if !expanded || selected != .calendar || showingSections || showingAppPanel { calendar.revealing = nil }
     }
 
     func openCountdownEvent() {

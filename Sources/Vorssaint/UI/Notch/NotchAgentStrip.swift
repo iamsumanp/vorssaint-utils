@@ -274,37 +274,47 @@ struct NotchMusicMeetingRow: View {
     @ObservedObject private var l10n = L10n.shared
 
     var body: some View {
-        if let countdown = calendar.countdown {
-            let event = countdown.event
+        if let event = NotchService.shared.musicMeeting {
             let title = NotchCalendarStrip.displayTitle(event, untitled: FeatureStrings.notchCalendar(l10n.language).untitled)
             TimelineView(.periodic(from: .now, by: 15)) { context in
-                HStack(spacing: 8) {
-                    Button { NotchService.shared.openCountdownEvent() } label: {
-                        HStack(spacing: 8) {
-                            RoundedRectangle(cornerRadius: 1.5, style: .continuous)
-                                .fill(event.color.color)
-                                .frame(width: 3, height: 13)
-                            Text(title)
-                                .font(.system(size: 12, weight: .semibold))
-                                .lineLimit(1).truncationMode(.tail)
-                            Spacer(minLength: 6)
-                            Text(NotchCalendarSupport.countdownText(until: countdown.target, now: context.date))
-                                .font(.system(size: 12, weight: .medium)).monospacedDigit()
-                                .foregroundStyle(.secondary)
-                                .lineLimit(1)
-                        }
-                        // Fill the row, so the time sits at its right edge.
-                        .frame(maxWidth: .infinity)
-                        .contentShape(Rectangle())
+                Button { NotchService.shared.openMeetingEvent(event) } label: {
+                    HStack(spacing: 8) {
+                        RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+                            .fill(event.color.color)
+                            .frame(width: 3, height: 13)
+                        Text(title)
+                            .font(.system(size: 12, weight: .semibold))
+                            .lineLimit(1).truncationMode(.tail)
+                        Spacer(minLength: 6)
+                        Text(Self.when(event, now: context.date, leadTime: calendar.countdownLeadTime))
+                            .font(.system(size: 12, weight: .medium)).monospacedDigit()
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
                     }
-                    .buttonStyle(.plain)
-                    // No Join here: the meeting's own page has it.
+                    // Fill the row, so the time sits at its right edge.
+                    .padding(.horizontal, 10)
+                    .frame(maxWidth: .infinity, minHeight: NotchLayout.musicAgentsRowHeight,
+                           maxHeight: NotchLayout.musicAgentsRowHeight)
+                    .contentShape(Rectangle())
                 }
-                .padding(.horizontal, 10)
-                .frame(maxWidth: .infinity, minHeight: NotchLayout.musicAgentsRowHeight,
-                       maxHeight: NotchLayout.musicAgentsRowHeight)
+                .buttonStyle(.plain)
                 .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 9, style: .continuous))
             }
         }
+    }
+
+    /// Minutes once the meeting is within the countdown's lead time, the
+    /// start time later today, and the weekday with the time after that.
+    static func when(_ event: NotchCalendarEvent, now: Date, leadTime: TimeInterval,
+                     calendar: Calendar = .current, locale: Locale = .current) -> String {
+        if event.start > now, event.start.timeIntervalSince(now) <= leadTime {
+            return NotchCalendarSupport.countdownText(until: event.start, now: now)
+        }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.calendar = calendar
+        formatter.timeZone = calendar.timeZone
+        formatter.setLocalizedDateFormatFromTemplate(calendar.isDate(event.start, inSameDayAs: now) ? "jmm" : "EEEjmm")
+        return formatter.string(from: event.start)
     }
 }
