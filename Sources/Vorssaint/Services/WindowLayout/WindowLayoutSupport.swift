@@ -532,6 +532,28 @@ enum WindowLayoutGeometry {
             }
     }
 
+    /// The placement that fills what a snap left free on the same display:
+    /// the other half, or the third beside two thirds. Corners, quarters,
+    /// sixths, centred and full-screen placements leave no single space to
+    /// fill, so they have none and Snap Assist stays closed.
+    static func complement(of action: WindowLayoutAction) -> WindowLayoutAction? {
+        switch action {
+        case .leftHalf: return .rightHalf
+        case .rightHalf: return .leftHalf
+        case .topHalf: return .bottomHalf
+        case .bottomHalf: return .topHalf
+        case .leftTwoThirds: return .rightThird
+        case .rightTwoThirds: return .leftThird
+        case .leftThird: return .rightTwoThirds
+        case .rightThird: return .leftTwoThirds
+        case .topTwoThirds: return .bottomThird
+        case .bottomTwoThirds: return .topThird
+        case .topThird: return .bottomTwoThirds
+        case .bottomThird: return .topTwoThirds
+        default: return nil
+        }
+    }
+
     static func rect(for action: WindowLayoutAction,
                      current: CGRect,
                      visibleFrame: CGRect,

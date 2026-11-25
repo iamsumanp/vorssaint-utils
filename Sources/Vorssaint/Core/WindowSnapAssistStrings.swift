@@ -1,0 +1,30 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2026 Vorssaint
+
+struct WindowSnapAssistStrings {
+    let title: String
+    let caption: String
+    let prompt: String
+    let hint: String
+    let empty: String
+
+    static func localized(_ language: AppLanguage) -> WindowSnapAssistStrings {
+        switch language {
+        case .enUS: return .init(title: "Snap Assist: pick a window for the space left over", caption: "After a shortcut snaps a window to a half or a third, the space it left free lists your other windows. Type part of a name, use the arrow keys or press 1 to 9, then Return to fill that space. Esc closes it.", prompt: "Fill this space", hint: "Type to search · ↩ place · esc close", empty: "No other windows")
+        case .ptBR: return .init(title: "Snap Assist: escolher uma janela para o espaço livre", caption: "Depois que um atalho encaixa uma janela em uma metade ou um terço, o espaço livre lista suas outras janelas. Digite parte de um nome, use as setas ou pressione 1 a 9 e depois Return para preencher o espaço. Esc fecha.", prompt: "Preencher este espaço", hint: "Digite para buscar · ↩ colocar · esc fechar", empty: "Nenhuma outra janela")
+        case .tr: return .init(title: "Snap Assist: boş kalan alan için bir pencere seç", caption: "Bir kısayol pencereyi yarıya ya da üçte bire yerleştirdikten sonra, boş kalan alan diğer pencerelerinizi listeler. Adın bir kısmını yazın, ok tuşlarını kullanın ya da 1-9 arası bir tuşa basın, sonra alanı doldurmak için Return’e basın. Esc kapatır.", prompt: "Bu alanı doldur", hint: "Aramak için yazın · ↩ yerleştir · esc kapat", empty: "Başka pencere yok")
+        case .ru: return .init(title: "Snap Assist: выбор окна для свободного места", caption: "Когда сочетание клавиш прикрепляет окно к половине или трети экрана, на свободном месте появляется список других окон. Введите часть названия, используйте стрелки или нажмите 1–9, затем Return, чтобы заполнить место. Esc закрывает список.", prompt: "Заполнить это место", hint: "Введите для поиска · ↩ поставить · esc закрыть", empty: "Других окон нет")
+        case .es: return .init(title: "Snap Assist: elegir una ventana para el espacio libre", caption: "Cuando un atajo ajusta una ventana a una mitad o un tercio, el espacio libre muestra tus otras ventanas. Escribe parte de un nombre, usa las flechas o pulsa del 1 al 9 y luego Return para llenar ese espacio. Esc lo cierra.", prompt: "Llenar este espacio", hint: "Escribe para buscar · ↩ colocar · esc cerrar", empty: "No hay otras ventanas")
+        case .sk: return .init(title: "Snap Assist: výber okna pre voľné miesto", caption: "Keď skratka pritiahne okno na polovicu alebo tretinu, voľné miesto zobrazí vaše ďalšie okná. Napíšte časť názvu, použite šípky alebo stlačte 1 až 9 a potom Return na vyplnenie miesta. Esc ho zavrie.", prompt: "Vyplniť toto miesto", hint: "Píšte na hľadanie · ↩ umiestniť · esc zavrieť", empty: "Žiadne ďalšie okná")
+        case .de: return .init(title: "Snap Assist: Fenster für den freien Platz wählen", caption: "Nachdem ein Kurzbefehl ein Fenster auf eine Hälfte oder ein Drittel gesetzt hat, zeigt der freie Platz deine anderen Fenster. Tippe einen Teil des Namens, nutze die Pfeiltasten oder drücke 1 bis 9 und dann Return, um den Platz zu füllen. Esc schließt.", prompt: "Diesen Platz füllen", hint: "Tippen zum Suchen · ↩ platzieren · esc schließen", empty: "Keine anderen Fenster")
+        case .fr: return .init(title: "Snap Assist : choisir une fenêtre pour l’espace libre", caption: "Quand un raccourci ancre une fenêtre sur une moitié ou un tiers, l’espace libéré liste vos autres fenêtres. Tapez une partie d’un nom, utilisez les flèches ou appuyez sur 1 à 9, puis sur Retour pour remplir cet espace. Échap le ferme.", prompt: "Remplir cet espace", hint: "Tapez pour chercher · ↩ placer · esc fermer", empty: "Aucune autre fenêtre")
+        case .it: return .init(title: "Snap Assist: scegli una finestra per lo spazio libero", caption: "Quando un’abbreviazione allinea una finestra a una metà o a un terzo, lo spazio libero elenca le altre finestre. Digita parte di un nome, usa le frecce o premi da 1 a 9, poi A capo per riempire lo spazio. Esc lo chiude.", prompt: "Riempi questo spazio", hint: "Digita per cercare · ↩ posiziona · esc chiudi", empty: "Nessun’altra finestra")
+        case .ja: return .init(title: "Snap Assist：空いた場所に置くウインドウを選ぶ", caption: "ショートカットでウインドウを半分や3分の1にスナップすると、空いた場所にほかのウインドウが一覧表示されます。名前の一部を入力するか、矢印キーまたは1〜9を押してから、Returnでその場所を埋めます。escで閉じます。", prompt: "この場所を埋める", hint: "入力して検索 · ↩ 配置 · esc 閉じる", empty: "ほかのウインドウはありません")
+        case .ko: return .init(title: "Snap Assist: 남은 공간에 놓을 윈도우 선택", caption: "단축키로 윈도우를 절반이나 3분의 1에 맞추면 남은 공간에 다른 윈도우 목록이 나타납니다. 이름 일부를 입력하거나 화살표 키 또는 1~9를 누른 뒤 Return을 눌러 그 공간을 채웁니다. esc를 누르면 닫힙니다.", prompt: "이 공간 채우기", hint: "입력해 검색 · ↩ 배치 · esc 닫기", empty: "다른 윈도우 없음")
+        case .zhHans: return .init(title: "Snap Assist：为空出的位置选择窗口", caption: "快捷键将窗口贴靠到一半或三分之一后，空出的位置会列出你的其他窗口。输入名称的一部分、使用方向键或按 1 到 9，然后按 Return 填满该位置。按 esc 关闭。", prompt: "填满此位置", hint: "输入以搜索 · ↩ 放置 · esc 关闭", empty: "没有其他窗口")
+        case .zhTW: return .init(title: "Snap Assist：為空出的位置選擇視窗", caption: "快速鍵將視窗貼齊到一半或三分之一後，空出的位置會列出你的其他視窗。輸入名稱的一部分、使用方向鍵或按 1 到 9，然後按 Return 填滿該位置。按 esc 關閉。", prompt: "填滿此位置", hint: "輸入以搜尋 · ↩ 放置 · esc 關閉", empty: "沒有其他視窗")
+        case .zhHK: return .init(title: "Snap Assist：為空出的位置選擇視窗", caption: "快速鍵將視窗貼齊到一半或三分之一後，空出的位置會列出你的其他視窗。輸入名稱的一部分、使用方向鍵或按 1 到 9，然後按 Return 填滿該位置。按 esc 關閉。", prompt: "填滿此位置", hint: "輸入以搜尋 · ↩ 放置 · esc 關閉", empty: "沒有其他視窗")
+        case .uk: return .init(title: "Snap Assist: вибір вікна для вільного місця", caption: "Коли сполучення клавіш прикріплює вікно до половини чи третини екрана, на вільному місці з’являється список інших вікон. Введіть частину назви, скористайтеся стрілками або натисніть 1–9, потім Return, щоб заповнити місце. Esc закриває список.", prompt: "Заповнити це місце", hint: "Вводьте для пошуку · ↩ поставити · esc закрити", empty: "Інших вікон немає")
+        }
+    }
+}

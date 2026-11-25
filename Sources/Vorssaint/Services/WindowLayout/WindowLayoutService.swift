@@ -36,6 +36,9 @@ final class WindowLayoutService: ObservableObject {
     @Published private(set) var isGestureRunning = false
 
     private var frameHistory = WindowLayoutHistory()
+    /// Where the latest successful placement put its window, read by the
+    /// shortcut path to offer Snap Assist for the space it left free.
+    private var lastSnap: WindowSnapAssistSnap?
     private var lastActions: [WindowLayoutWindowKey: WindowLayoutAction] = [:]
     // What a window measured before the first placement of a run of snaps put
     // it where it is now. Dragging it out of the snapped place hands this size
@@ -359,6 +362,44 @@ final class WindowLayoutService: ObservableObject {
     /// Dock Preview resolves the target from the drop location; the frame still
     /// goes through the same settling and recovery path as every Window Layout
     /// placement instead of maintaining a second AX mutation algorithm.
+    /// A layout shortcut: the placement, then Snap Assist for the space it
+    /// left free when the setting is on and the placement leaves one.
+    func applyFromShortcut(_ action: WindowLayoutAction) {
+        lastSnap = nil
+        let result = apply(action)
+        guard result == .success(restored: false),
+              let snap = lastSnap,
+              WindowSnapAssist.isEnabled(),
+              let complement = WindowLayoutGeometry.complement(of: snap.action) else { return }
+        let rect = placement(for: complement,
+                             current: axFrame(fromAppKit: snap.frame),
+                             visibleFrame: snap.visibleFrame).rect
+        WindowSnapAssist.shared.show(WindowSnapAssistRequest(action: complement,
+                                                             rect: rect,
+                                                             visibleFrame: snap.visibleFrame,
+                                                             snappedWindowID: snap.windowID,
+                                                             snappedPID: snap.pid))
+    }
+
+    /// Puts one exact window in a placement on a given display, through the
+    /// same settle path as a shortcut. Snap Assist uses it for the window the
+    /// user picked, which is not the focused one yet. False while the window
+    /// is not on screen or cannot be resized, so the caller can try again.
+    @discardableResult
+    func place(_ action: WindowLayoutAction, windowID: CGWindowID, ownerPID: pid_t,
+               visibleFrame: NSRect) -> Bool {
+        guard AXIsProcessTrusted(),
+              let app = NSRunningApplication(processIdentifier: ownerPID), !app.isTerminated,
+              let onScreen = onScreenWindowIDs() else { return false }
+        let axApp = AXUIElementCreateApplication(ownerPID)
+        AXUIElementSetMessagingTimeout(axApp, 0.35)
+        guard let window = windowsAttribute(axApp)?.first(where: { AXWindowResolver.windowID(for: $0) == windowID }),
+              let target = target(from: window, app: app, onScreenWindowIDs: onScreen,
+                                  capability: action.targetCapability) else { return false }
+        return applyPlacement(action, to: target, visibleFrame: visibleFrame,
+                              cyclesRepeatedAction: false) == .success(restored: false)
+    }
+
     @discardableResult
     private func finish(_ result: WindowLayoutResult) -> WindowLayoutResult {
         resultGeneration += 1
@@ -404,6 +445,9 @@ final class WindowLayoutService: ObservableObject {
             } else {
                 settledFrames.removeValue(forKey: target.key)
             }
+            lastSnap = WindowSnapAssistSnap(action: effectiveAction, visibleFrame: visibleFrame,
+                                            frame: placement.rect, windowID: target.windowID,
+                                            pid: target.key.processID)
             return finish(.success(restored: false))
         }
         frameHistory.record(historyFrame ?? target.frame, for: target.key)
@@ -422,6 +466,9 @@ final class WindowLayoutService: ObservableObject {
                     cyclePress: cyclePress) {
             if startsRun { restoreFrames[target.key] = historyFrame ?? target.frame }
             lastActions[target.key] = effectiveAction
+            lastSnap = WindowSnapAssistSnap(action: effectiveAction, visibleFrame: visibleFrame,
+                                            frame: placement.rect, windowID: target.windowID,
+                                            pid: target.key.processID)
             return finish(.success(restored: false))
         }
         frameHistory.discardLatest(for: target.key)
@@ -923,7 +970,7 @@ final class WindowLayoutService: ObservableObject {
                       let action = WindowLayoutAction(shortcutID: id.id) else {
                     return OSStatus(eventNotHandledErr)
                 }
-                DispatchQueue.main.async { service.apply(action) }
+                DispatchQueue.main.async { service.applyFromShortcut(action) }
                 return noErr
             }, specs.count, &specs, Unmanaged.passUnretained(self).toOpaque(), &eventHandler)
         }

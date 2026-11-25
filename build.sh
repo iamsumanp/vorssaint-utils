@@ -590,6 +590,8 @@ if (( TEST )); then
         Sources/Vorssaint/Services/WindowLayout/WindowStageManagerSupport.swift
         Sources/Vorssaint/Core/WindowStageManagerStrings.swift
         Sources/Vorssaint/Core/WindowEdgeSnapRestoreStrings.swift
+        Sources/Vorssaint/Core/WindowSnapAssistStrings.swift
+        Sources/Vorssaint/Services/WindowLayout/WindowSnapAssistSupport.swift
         Sources/Vorssaint/Services/WindowLayout/WindowGestureSupport.swift
         Sources/Vorssaint/Core/WindowDirectionalStrings.swift
         Sources/Vorssaint/Core/PointerDisplayStrings.swift

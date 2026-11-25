@@ -28,6 +28,7 @@ struct WindowLayoutSettings: View {
     @AppStorage(DefaultsKey.windowReserveStageManagerSpace) private var reserveStageManagerSpace = false
     @AppStorage(DefaultsKey.windowLayoutMarginPercent) private var marginPercent = WindowLayoutMargin.defaultPercent
     @AppStorage(DefaultsKey.windowLayoutSideRepeatCyclesThirds) private var sideRepeatCyclesThirds = false
+    @AppStorage(DefaultsKey.windowSnapAssist) private var snapAssist = true
     @State private var directionalError: String?
     @State private var systemTilingEnabled = WindowEdgeSnapSupport.isSystemTilingEnabled
     // Same preference the Switcher page exposes next to Dock Preview; it is
@@ -162,6 +163,11 @@ struct WindowLayoutSettings: View {
                             .font(.caption)
                             .foregroundStyle(.orange)
                     }
+                    Toggle(WindowSnapAssistStrings.localized(l10n.language).title, isOn: $snapAssist)
+                        .disabled(!shortcutsEnabled)
+                    Text(WindowSnapAssistStrings.localized(l10n.language).caption)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
                     Toggle(WindowDirectionalStrings.localized(l10n.language).title,
                            isOn: $directionalEnabled)
                         .onChange(of: directionalEnabled) { _, _ in service.syncWithPreferences() }

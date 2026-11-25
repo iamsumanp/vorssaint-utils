@@ -18,6 +18,7 @@ enum WindowLayoutFeatureTests {
         WindowDirectionalModifierRuntimeTests.run(suite)
         WindowEdgeSnapRuntimeTests.run(suite)
         WindowEdgeSnapRestoreTests.run(suite)
+        WindowSnapAssistTests.run(suite)
         WindowGestureApplyRuntimeTests.run(suite)
         WindowGestureTargetRuntimeTests.run(suite)
         let leftButton: [CGEventType] = [.leftMouseDown, .leftMouseDragged, .leftMouseUp]
