@@ -30,14 +30,18 @@ struct WindowSnapAssistRequest: Equatable {
 enum WindowSnapAssistSupport {
     /// The windows worth offering: real windows of other apps or other
     /// windows of the same app, never the snapped window, Vorssaint's own
-    /// windows or a full-screen window that lives on its own Space.
+    /// windows or a full-screen window that lives on its own Space. The
+    /// snapped app's other windows go last: the space is almost always for a
+    /// second app, and an app like Claude keeps blank helper windows that
+    /// would otherwise sit at the top of the list.
     static func candidates(_ items: [SwitcherItem], excluding snappedWindowID: CGWindowID,
-                           ownPID: pid_t) -> [SwitcherItem] {
-        items.filter { item in
+                           snappedPID: pid_t = 0, ownPID: pid_t) -> [SwitcherItem] {
+        let offered = items.filter { item in
             guard let windowID = item.windowID else { return false }
             return windowID != snappedWindowID && item.pid != ownPID && item.windowOwnerPID != ownPID
                 && !item.isFullscreen
         }
+        return offered.filter { $0.pid != snappedPID } + offered.filter { $0.pid == snappedPID }
     }
 
     /// Typed letters narrow the list. An app whose name starts with them

@@ -54,6 +54,11 @@ enum WindowSnapAssistTests {
                                                             excluding: 10, ownPID: 1)
         suite.expect(candidates.map(\.windowID) == [11, 12, 13],
                      "the snapped window, own windows, full-screen windows and windowless apps are never offered")
+        let claudeHelper = SwitcherItem.window(id: 16, title: "Claude", appName: "Claude", pid: 100,
+                                               isOnScreen: true, frame: frame)
+        suite.expect(WindowSnapAssistSupport.candidates([claudeHelper, snapped, dia, mediator], excluding: 10,
+                                                        snappedPID: 100, ownPID: 1).map(\.windowID) == [11, 13, 16],
+                     "the snapped app's other windows come after every other app's")
 
         suite.expect(WindowSnapAssistSupport.filter(candidates, query: "").map(\.windowID) == [11, 12, 13],
                      "with nothing typed the list keeps its most-recently-used order")

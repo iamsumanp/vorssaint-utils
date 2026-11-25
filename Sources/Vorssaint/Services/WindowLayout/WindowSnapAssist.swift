@@ -103,7 +103,8 @@ final class WindowSnapAssist {
         let ownPID = ProcessInfo.processInfo.processIdentifier
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let all = WindowEnumerator.listWindowsForCommandBar(snapshot: snapshot)
-            let items = WindowSnapAssistSupport.candidates(all, excluding: request.snappedWindowID, ownPID: ownPID)
+            let items = WindowSnapAssistSupport.candidates(all, excluding: request.snappedWindowID,
+                                                                   snappedPID: request.snappedPID, ownPID: ownPID)
             DispatchQueue.main.async {
                 guard let self, self.generation == generation, let model = self.model else { return }
                 model.items = items
