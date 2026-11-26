@@ -36,6 +36,25 @@ enum WindowSnapAssistTests {
                          "\(action.rawValue) and \(expected.rawValue) share the display without overlapping")
         }
 
+        suite.expect(WindowSnapAssistSupport.fillOrder(after: .topLeft) == [.topRight, .bottomLeft, .bottomRight],
+                     "a top-left snap fills the top-right, then the bottom-left, then the bottom-right")
+        suite.expect(WindowSnapAssistSupport.fillOrder(after: .bottomRight) == [.bottomLeft, .topRight, .topLeft],
+                     "a bottom-right snap fills its row first, then the quarter above, then the diagonal")
+        for corner in [WindowLayoutAction.topLeft, .topRight, .bottomLeft, .bottomRight] {
+            let order = WindowSnapAssistSupport.fillOrder(after: corner)
+            suite.expect(Set(order + [corner]).count == 4 && order.count == 3,
+                         "\(corner.rawValue) offers each of the other three quarters once")
+            let rects = (order + [corner]).map {
+                WindowLayoutGeometry.rect(for: $0, current: .zero, visibleFrame: CGRect(x: 0, y: 0, width: 1920, height: 1050))
+            }
+            suite.expect(rects.reduce(0) { $0 + $1.width * $1.height } == 1920 * 1050,
+                         "\(corner.rawValue) and its fill order cover the display")
+        }
+        suite.expect(WindowSnapAssistSupport.fillOrder(after: .leftHalf) == [.rightHalf],
+                     "a half fills only its other half")
+        suite.expect(WindowSnapAssistSupport.fillOrder(after: .maximize).isEmpty,
+                     "a maximized window leaves nothing to fill")
+
         let frame = CGRect(x: 0, y: 0, width: 800, height: 600)
         let snapped = SwitcherItem.window(id: 10, title: "Chat", appName: "Claude", pid: 100,
                                           isOnScreen: true, frame: frame)
@@ -59,6 +78,9 @@ enum WindowSnapAssistTests {
         suite.expect(WindowSnapAssistSupport.candidates([claudeHelper, snapped, dia, mediator], excluding: 10,
                                                         snappedPID: 100, ownPID: 1).map(\.windowID) == [11, 13, 16],
                      "the snapped app's other windows come after every other app's")
+        suite.expect(WindowSnapAssistSupport.candidates([snapped, dia, diaTwo, mediator], excluding: 10,
+                                                        placed: [11, 13], ownPID: 1).map(\.windowID) == [12],
+                     "windows placed by earlier steps of the grid are not offered again")
 
         suite.expect(WindowSnapAssistSupport.filter(candidates, query: "").map(\.windowID) == [11, 12, 13],
                      "with nothing typed the list keeps its most-recently-used order")

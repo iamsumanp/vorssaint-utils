@@ -17,13 +17,17 @@ struct WindowSnapAssistSnap: Equatable {
 
 /// The space Snap Assist fills: the placement that completes the snap, its
 /// AppKit rect on the snapped window's display, and the window that is
-/// already in place and so never offered.
+/// already in place and so never offered. After a corner the grid fills one
+/// quarter at a time: `remaining` holds the quarters still to offer and
+/// `placedWindowIDs` the windows earlier steps put in place.
 struct WindowSnapAssistRequest: Equatable {
     let action: WindowLayoutAction
     let rect: NSRect
     let visibleFrame: NSRect
     let snappedWindowID: CGWindowID
     let snappedPID: pid_t
+    var remaining: [WindowLayoutAction] = []
+    var placedWindowIDs: [CGWindowID] = []
 }
 
 /// The pure parts of the picker, kept apart so tests can reach them.
@@ -35,13 +39,30 @@ enum WindowSnapAssistSupport {
     /// second app, and an app like Claude keeps blank helper windows that
     /// would otherwise sit at the top of the list.
     static func candidates(_ items: [SwitcherItem], excluding snappedWindowID: CGWindowID,
+                           placed: [CGWindowID] = [],
                            snappedPID: pid_t = 0, ownPID: pid_t) -> [SwitcherItem] {
         let offered = items.filter { item in
             guard let windowID = item.windowID else { return false }
-            return windowID != snappedWindowID && item.pid != ownPID && item.windowOwnerPID != ownPID
+            return windowID != snappedWindowID && !placed.contains(windowID)
+                && item.pid != ownPID && item.windowOwnerPID != ownPID
                 && !item.isFullscreen
         }
         return offered.filter { $0.pid != snappedPID } + offered.filter { $0.pid == snappedPID }
+    }
+
+    /// The spaces a snap leaves to fill, in the order Snap Assist offers
+    /// them. A half or a third leaves one, its complement. A corner leaves
+    /// the other three quarters: the one beside it on the same row first,
+    /// then the one below or above it, then the diagonal, so each pick grows
+    /// the grid next to what is already there. Anything else leaves none.
+    static func fillOrder(after action: WindowLayoutAction) -> [WindowLayoutAction] {
+        switch action {
+        case .topLeft: return [.topRight, .bottomLeft, .bottomRight]
+        case .topRight: return [.topLeft, .bottomRight, .bottomLeft]
+        case .bottomLeft: return [.bottomRight, .topLeft, .topRight]
+        case .bottomRight: return [.bottomLeft, .topRight, .topLeft]
+        default: return WindowLayoutGeometry.complement(of: action).map { [$0] } ?? []
+        }
     }
 
     /// Typed letters narrow the list. An app whose name starts with them

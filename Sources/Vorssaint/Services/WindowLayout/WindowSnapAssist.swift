@@ -40,6 +40,7 @@ final class WindowSnapAssist {
     private var observers: [(NotificationCenter, NSObjectProtocol)] = []
     private var previewTask: Task<Void, Never>?
     private var generation = 0
+    private var shownAt = Date.distantPast
 
     private init() {}
 
@@ -50,15 +51,16 @@ final class WindowSnapAssist {
     /// the right half of the main display a few seconds after launch, with no
     /// window moved. Never set otherwise, so it adds nothing.
     static let testLaunch: Void = {
-        guard ProcessInfo.processInfo.environment["VORSSAINT_TEST_SNAP_ASSIST"] != nil else { return }
+        // A placement name (topRight, leftThird…) opens that space instead.
+        guard let value = ProcessInfo.processInfo.environment["VORSSAINT_TEST_SNAP_ASSIST"] else { return }
+        let action = WindowLayoutAction(rawValue: value) ?? .rightHalf
         DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
             guard let screen = NSScreen.main else { return }
             let visible = screen.windowLayoutVisibleFrame
-            let rect = WindowLayoutGeometry.rect(for: .rightHalf, current: .zero, visibleFrame: visible,
-                                                 windowGap: WindowLayoutGaps.windowGap,
-                                                 screenGap: WindowLayoutGaps.screenGap).integral
-            shared.show(WindowSnapAssistRequest(action: .rightHalf, rect: rect, visibleFrame: visible,
-                                                snappedWindowID: 0, snappedPID: 0))
+            shared.show(WindowSnapAssistRequest(
+                action: action,
+                rect: WindowLayoutService.shared.snapAssistRect(for: action, visibleFrame: visible),
+                visibleFrame: visible, snappedWindowID: 0, snappedPID: 0))
         }
     }()
 
@@ -94,6 +96,13 @@ final class WindowSnapAssist {
         panel.alphaValue = 0
         panel.orderFrontRegardless()
         panel.makeKey()
+        shownAt = Date()
+        // The next step of a grid opens while the window just picked is still
+        // being activated; take the keyboard back once that settles.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) { [weak self, weak panel] in
+            guard let panel, self?.panel === panel, !panel.isKeyWindow else { return }
+            panel.makeKey()
+        }
         NSAnimationContext.runAnimationGroup { context in
             context.duration = 0.12
             panel.animator().alphaValue = 1
@@ -104,7 +113,8 @@ final class WindowSnapAssist {
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             let all = WindowEnumerator.listWindowsForCommandBar(snapshot: snapshot)
             let items = WindowSnapAssistSupport.candidates(all, excluding: request.snappedWindowID,
-                                                                   snappedPID: request.snappedPID, ownPID: ownPID)
+                                                           placed: request.placedWindowIDs,
+                                                           snappedPID: request.snappedPID, ownPID: ownPID)
             DispatchQueue.main.async {
                 guard let self, self.generation == generation, let model = self.model else { return }
                 model.items = items
@@ -163,10 +173,36 @@ final class WindowSnapAssist {
         if placed || attempt >= 12 {
             WindowActivator.activate(item, handoffSourcePID: request.snappedPID)
             WindowActivator.focusPlacedWindow(item)
+            offerNext(after: request, placedWindowID: windowID, pid: item.pid, wait: 0)
             return
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
             self?.attemptPlacement(item, windowID: windowID, request: request, attempt: attempt + 1)
+        }
+    }
+
+    /// After a corner, the grid's next quarter, once the window just picked
+    /// has come to the front: opening over an activation still under way
+    /// would hand the keyboard straight back to that app.
+    private func offerNext(after request: WindowSnapAssistRequest, placedWindowID: CGWindowID,
+                           pid: pid_t, wait: Int) {
+        guard let next = request.remaining.first else { return }
+        let front = NSWorkspace.shared.frontmostApplication?.processIdentifier == pid
+        if !front && wait < 24 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+                self?.offerNext(after: request, placedWindowID: placedWindowID, pid: pid, wait: wait + 1)
+            }
+            return
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { [weak self] in
+            self?.show(WindowSnapAssistRequest(
+                action: next,
+                rect: WindowLayoutService.shared.snapAssistRect(for: next, visibleFrame: request.visibleFrame),
+                visibleFrame: request.visibleFrame,
+                snappedWindowID: request.snappedWindowID,
+                snappedPID: request.snappedPID,
+                remaining: Array(request.remaining.dropFirst()),
+                placedWindowIDs: request.placedWindowIDs + [placedWindowID]))
         }
     }
 
@@ -181,7 +217,16 @@ final class WindowSnapAssist {
         }
         let center = NotificationCenter.default
         observers.append((center, center.addObserver(forName: NSWindow.didResignKeyNotification, object: panel,
-                                                     queue: .main) { [weak self] _ in self?.close() }))
+                                                     queue: .main) { [weak self, weak panel] _ in
+            // A late activation from the previous step can take the keyboard
+            // just after the panel opens; that is not the user leaving.
+            guard let self else { return }
+            if Date().timeIntervalSince(self.shownAt) < 0.8, let panel {
+                panel.makeKey()
+                return
+            }
+            self.close()
+        }))
         let workspace = NSWorkspace.shared.notificationCenter
         observers.append((workspace, workspace.addObserver(forName: NSWorkspace.activeSpaceDidChangeNotification,
                                                            object: nil, queue: .main) { [weak self] _ in self?.close() }))

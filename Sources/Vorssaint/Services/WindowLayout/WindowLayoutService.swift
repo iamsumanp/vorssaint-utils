@@ -370,16 +370,22 @@ final class WindowLayoutService: ObservableObject {
         let result = apply(action)
         guard result == .success(restored: false),
               let snap = lastSnap,
-              WindowSnapAssist.isEnabled(),
-              let complement = WindowLayoutGeometry.complement(of: snap.action) else { return }
-        let rect = placement(for: complement,
-                             current: axFrame(fromAppKit: snap.frame),
-                             visibleFrame: snap.visibleFrame).rect
-        WindowSnapAssist.shared.show(WindowSnapAssistRequest(action: complement,
-                                                             rect: rect,
+              WindowSnapAssist.isEnabled() else { return }
+        let order = WindowSnapAssistSupport.fillOrder(after: snap.action)
+        guard let first = order.first else { return }
+        WindowSnapAssist.shared.show(WindowSnapAssistRequest(action: first,
+                                                             rect: snapAssistRect(for: first,
+                                                                                  visibleFrame: snap.visibleFrame),
                                                              visibleFrame: snap.visibleFrame,
                                                              snappedWindowID: snap.windowID,
-                                                             snappedPID: snap.pid))
+                                                             snappedPID: snap.pid,
+                                                             remaining: Array(order.dropFirst())))
+    }
+
+    /// The AppKit rect a placement takes on a display, with the user's gaps,
+    /// for Snap Assist to cover while it offers that space.
+    func snapAssistRect(for action: WindowLayoutAction, visibleFrame: NSRect) -> NSRect {
+        placement(for: action, current: axFrame(fromAppKit: visibleFrame), visibleFrame: visibleFrame).rect
     }
 
     /// Puts one exact window in a placement on a given display, through the
